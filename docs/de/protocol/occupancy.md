@@ -10,6 +10,10 @@ Belegtmeldung dient dazu, den Aufenthaltsort von Fahrzeugen zu erfassen, typisch
 Aufgrund der Wichtigkeit von Belegtmeldungen für den sicheren Betrieb bietet BiDiB mehrere Sicherungsmechanismen:
 -   **CRC und Sequenznummern:** Sichern die Übertragung.
 -   **Secure-ACK:** Ein erweitertes Quittungsverfahren, bei dem der Host empfangene Meldungen zurückspiegelt. Bei Abweichungen sendet der Melder die korrekten Daten erneut.
+    -   **Beispielablauf:**
+        1.  **Knoten → Host:** `MSG_BM_OCC` (Melder 5 ist belegt)
+        2.  **Host → Knoten:** `MSG_BM_MIRROR_OCC` (Bestätigung für Melder 5)
+        3.  Wenn die Bestätigung ausbleibt, wiederholt der Knoten die `MSG_BM_OCC`-Nachricht.
 -   **'Vertrauens'-Kontrolle:** Der Melder kann die "Qualität" seiner Meldung übermitteln (z.B. ob die Erfassung durch einen Kurzschluss gestört ist).
 -   **'Alive'-Kontrolle:** Das Interface überwacht die Verbindung zu den Meldern.
 

@@ -37,6 +37,7 @@ Es gibt zwei Adressierungsmodelle für Ports:
 -   **MSG_LC_PORT_QUERY:** Abfrage des Zustands eines einzelnen Ports.
 -   **MSG_LC_PORT_QUERY_ALL:** Abfrage des Zustands aller oder mehrerer Ports.
 -   **MSG_LC_CONFIGX_SET:** Konfiguration eines Ports über Schlüssel-Wert-Paare.
+    -   **Beispiel:** Um die Helligkeit eines Lichtausgangs (`LIGHT`) zu konfigurieren, sendet der Host `MSG_LC_CONFIGX_SET` mit den Parametern für `BIDIB_PCFG_LEVEL_PORT_ON` und `BIDIB_PCFG_LEVEL_PORT_OFF`.
 -   **MSG_LC_CONFIGX_GET:** Abfrage der Konfiguration eines Ports.
 -   **MSG_LC_CONFIGX_GET_ALL:** Abfrage der Konfiguration aller oder mehrerer Ports.
 

@@ -25,6 +25,7 @@ Booster commands (`MSG_BOOST_ON`/`MSG_BOOST_OFF`) are typically sent by the host
 ### 3.1. Downlink: Messages from Host to Node
 
 -   **MSG_BOOST_ON:** Turns the track voltage on. A parameter (`UNICAST`) controls whether the command is sent to all (broadcast) or only to the addressed booster.
+    -   **Example Message (Broadcast):** `[MSG_BOOST_ON, 0x00]`
 -   **MSG_BOOST_OFF:** Turns the track voltage off (also with a `UNICAST` parameter).
 -   **MSG_BOOST_QUERY:** Queries the status and, if available, diagnostic values of the booster.
 

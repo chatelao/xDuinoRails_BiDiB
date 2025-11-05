@@ -37,6 +37,7 @@ There are two addressing models for ports:
 -   **MSG_LC_PORT_QUERY:** Queries the state of a single port.
 -   **MSG_LC_PORT_QUERY_ALL:** Queries the state of all or multiple ports.
 -   **MSG_LC_CONFIGX_SET:** Configures a port using key-value pairs.
+    -   **Example:** To configure the brightness of a light output (`LIGHT`), the host sends `MSG_LC_CONFIGX_SET` with the parameters for `BIDIB_PCFG_LEVEL_PORT_ON` and `BIDIB_PCFG_LEVEL_PORT_OFF`.
 -   **MSG_LC_CONFIGX_GET:** Queries the configuration of a port.
 -   **MSG_LC_CONFIGX_GET_ALL:** Queries the configuration of all or multiple ports.
 

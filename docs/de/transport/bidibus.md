@@ -38,3 +38,17 @@ Dieses Dokument beschreibt den BiDiBus, einen robusten Highspeed-Bus für die Mo
 ## 4. Systemzeit
 
 Zur Synchronisation der Systemzeit sendet das Interface regelmäßig `MSG_LOCAL_SYNC`-Nachrichten als Broadcast.
+
+## 5. Beispiel: Logon-Nachricht
+
+Eine typische Logon-Nachricht eines Knotens auf dem BiDiBus sieht wie folgt aus:
+
+`0x0B 0x0A 0x00 0x00 0x8E 0x40 0x00 0x0D 0x67 0x00 0x01 0x00 0x4C`
+
+-   `0x0B`: P_LENGTH (Größe des Pakets = 11 Bytes)
+-   `0x0A`: MSG_LENGTH (Größe der Nachricht = 10 Bytes)
+-   `0x00`: Lokale Adresse (wird vom Interface ignoriert)
+-   `0x00`: MSG_NUM (bei lokalen Nachrichten 0)
+-   `0x8E`: MSG_TYPE (`MSG_LOCAL_LOGON`)
+-   `0x40 ... 0x00`: Die 7 Bytes der Unique-ID des Knotens
+-   `0x4C`: CRC8

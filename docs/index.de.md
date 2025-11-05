@@ -22,3 +22,7 @@ Die Protokoll-Spezifikation beschreibt die Nachrichten und deren Bedeutung.
 Die Transport-Spezifikation beschreibt die physikalischen Übertragungsschichten.
 
 - [Übersicht der Transportprotokolle](./de/transport/intro.md)
+
+## Beispiele
+
+- [Beispiel einer Belegtmeldung](./de/examples/occupancy_message.md)

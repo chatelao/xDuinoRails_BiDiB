@@ -97,6 +97,14 @@ The Unique ID consists of 7 bytes:
 4.  Repeat step 3 for all other nodes.
 5.  Enable the system for spontaneous messages with `MSG_SYS_ENABLE`.
 
+#### Example of a Startup Sequence
+A typical sequence of messages at startup looks like this:
+1.  Host sends `MSG_SYS_GET_MAGIC` (to check the connection and baud rate).
+2.  Node responds with `MSG_SYS_MAGIC`.
+3.  Host sends `MSG_SYS_RESET`.
+4.  Host queries basic information: `MSG_SYS_GET_P_VERSION`, `MSG_SYS_GET_UNIQUE_ID`, `MSG_SYS_GET_SW_VERSION`.
+5.  Host queries the node table (`MSG_NODETAB_GETALL`) and then all features (`MSG_FEATURE_GETALL`).
+
 ## 3. System Messages
 
 ### 3.1. Downlink: System Messages
@@ -148,6 +156,18 @@ Features are used to query and configure node properties.
 - **MSG_FEATURE:** Response to a feature query. Contains the feature number and value.
 - **MSG_FEATURE_NA:** Sent when a requested feature is not available.
 - **MSG_FEATURE_COUNT:** Response to `MSG_FEATURE_GETALL`. Contains the number of features.
+
+#### Example of Querying All Features
+1.  **Host → Node:** `MSG_FEATURE_GETALL`
+2.  **Node → Host:** `MSG_FEATURE_COUNT` (e.g., with value 3)
+3.  **Host → Node:** `MSG_FEATURE_GETNEXT`
+4.  **Node → Host:** `MSG_FEATURE` (for the first feature)
+5.  **Host → Node:** `MSG_FEATURE_GETNEXT`
+6.  **Node → Host:** `MSG_FEATURE` (for the second feature)
+7.  **Host → Node:** `MSG_FEATURE_GETNEXT`
+8.  **Node → Host:** `MSG_FEATURE` (for the third feature)
+9.  **Host → Node:** `MSG_FEATURE_GETNEXT`
+10. **Node → Host:** `MSG_FEATURE_NA` (with a special value of 255 to signal the end)
 
 ## 5. User Configuration Messages (Vendor-specific)
 

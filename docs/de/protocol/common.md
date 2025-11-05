@@ -97,6 +97,14 @@ Die Unique-ID besteht aus 7 Bytes:
 4.  Schritt 3 für alle weiteren Knoten wiederholen.
 5.  System mit `MSG_SYS_ENABLE` für Spontanmeldungen freigeben.
 
+#### Beispiel für eine Start-Sequenz
+Eine typische Abfolge von Nachrichten beim Start sieht so aus:
+1.  Host sendet `MSG_SYS_GET_MAGIC` (um die Verbindung und Baudrate zu prüfen).
+2.  Knoten antwortet mit `MSG_SYS_MAGIC`.
+3.  Host sendet `MSG_SYS_RESET`.
+4.  Host fragt grundlegende Informationen ab: `MSG_SYS_GET_P_VERSION`, `MSG_SYS_GET_UNIQUE_ID`, `MSG_SYS_GET_SW_VERSION`.
+5.  Host fragt die Knotentabelle ab (`MSG_NODETAB_GETALL`) und danach alle Features (`MSG_FEATURE_GETALL`).
+
 ## 3. System-Nachrichten
 
 ### 3.1. Downlink: System-Nachrichten
@@ -148,6 +156,18 @@ Features dienen der Abfrage und Konfiguration von Knoteneigenschaften.
 - **MSG_FEATURE:** Antwort auf eine Feature-Abfrage. Enthält Feature-Nummer und Wert.
 - **MSG_FEATURE_NA:** Wird gesendet, wenn ein angefragtes Feature nicht verfügbar ist.
 - **MSG_FEATURE_COUNT:** Antwort auf `MSG_FEATURE_GETALL`. Enthält die Anzahl der Features.
+
+#### Beispiel für eine Abfrage aller Features
+1.  **Host → Knoten:** `MSG_FEATURE_GETALL`
+2.  **Knoten → Host:** `MSG_FEATURE_COUNT` (z.B. mit Wert 3)
+3.  **Host → Knoten:** `MSG_FEATURE_GETNEXT`
+4.  **Knoten → Host:** `MSG_FEATURE` (für das erste Feature)
+5.  **Host → Knoten:** `MSG_FEATURE_GETNEXT`
+6.  **Knoten → Host:** `MSG_FEATURE` (für das zweite Feature)
+7.  **Host → Knoten:** `MSG_FEATURE_GETNEXT`
+8.  **Knoten → Host:** `MSG_FEATURE` (für das dritte Feature)
+9.  **Host → Knoten:** `MSG_FEATURE_GETNEXT`
+10. **Knoten → Host:** `MSG_FEATURE_NA` (mit speziellem Wert 255, um das Ende zu signalisieren)
 
 ## 5. Nachrichten zur Userkonfiguration (Vendor-spezifisch)
 

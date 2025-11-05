@@ -38,3 +38,17 @@ This document describes BiDiBus, a robust high-speed bus for model railway contr
 ## 4. System Time
 
 For system time synchronization, the interface regularly sends `MSG_LOCAL_SYNC` messages as a broadcast.
+
+## 5. Example: Logon Message
+
+A typical logon message from a node on the BiDiBus looks like this:
+
+`0x0B 0x0A 0x00 0x00 0x8E 0x40 0x00 0x0D 0x67 0x00 0x01 0x00 0x4C`
+
+-   `0x0B`: P_LENGTH (Packet size = 11 bytes)
+-   `0x0A`: MSG_LENGTH (Message size = 10 bytes)
+-   `0x00`: Local address (ignored by the interface)
+-   `0x00`: MSG_NUM (0 for local messages)
+-   `0x8E`: MSG_TYPE (`MSG_LOCAL_LOGON`)
+-   `0x40 ... 0x00`: The 7 bytes of the node's Unique ID
+-   `0x4C`: CRC8

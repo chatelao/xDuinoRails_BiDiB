@@ -35,3 +35,28 @@ Die Verbindung zwischen Host und Interface ist eine Punkt-zu-Punkt-Verbindung.
 
 -   **`MSG_LOCAL_PING` / `MSG_LOCAL_PONG`:** Dienen der Aufrechterhaltung der Verbindung, wenn keine anderen Daten gesendet werden.
 -   **`MSG_LOCAL_SYNC`:** Dient zur Übertragung der Systemzeit vom Host zum Knoten, um zeitbasierte Messungen zu synchronisieren.
+
+## 5. Code-Beispiel: Senden einer Nachricht
+
+```c
+void send_bidib_message(unsigned char *message)
+{
+  unsigned char i=0;
+  unsigned char length;
+  unsigned char tx_crc = 0;
+
+  bidib_send_delimiter(); // Sendet start MAGIC (0xFE)
+
+  length = message[0];
+  bidib_send(length); // Sendet MSG_LENGTH (mit escaping)
+  tx_crc = crc_array[length ^ tx_crc];
+
+  for (i=1; i<=length; i++)
+  {
+    bidib_send(message[i]); // Sendet Datenbytes (mit escaping)
+    tx_crc = crc_array[message[i] ^ tx_crc];
+  }
+  bidib_send(tx_crc); // Sendet CRC (mit escaping)
+  bidib_send_delimiter(); // Sendet ende MAGIC (0xFE)
+}
+```

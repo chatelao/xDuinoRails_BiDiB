@@ -35,3 +35,28 @@ The connection between the host and the interface is a point-to-point connection
 
 -   **`MSG_LOCAL_PING` / `MSG_LOCAL_PONG`:** Used to maintain the connection when no other data is being sent.
 -   **`MSG_LOCAL_SYNC`:** Used to transmit the system time from the host to the node to synchronize time-based measurements.
+
+## 5. Code Example: Sending a Message
+
+```c
+void send_bidib_message(unsigned char *message)
+{
+  unsigned char i=0;
+  unsigned char length;
+  unsigned char tx_crc = 0;
+
+  bidib_send_delimiter(); // Sends start MAGIC (0xFE)
+
+  length = message[0];
+  bidib_send(length); // Sends MSG_LENGTH (with escaping)
+  tx_crc = crc_array[length ^ tx_crc];
+
+  for (i=1; i<=length; i++)
+  {
+    bidib_send(message[i]); // Sends data bytes (with escaping)
+    tx_crc = crc_array[message[i] ^ tx_crc];
+  }
+  bidib_send(tx_crc); // Sends CRC (with escaping)
+  bidib_send_delimiter(); // Sends end MAGIC (0xFE)
+}
+```

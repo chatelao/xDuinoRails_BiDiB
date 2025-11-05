@@ -34,3 +34,20 @@ Eine Reihe von `MSG_LOCAL_...`-Nachrichten wird verwendet, um den Verbindungssta
 -   **`MSG_LOCAL_LOGON_REJECTED`:** Das Interface lehnt die Anmeldung ab oder beendet eine bestehende Kontrollbeziehung.
 -   **`MSG_LOCAL_LOGOFF`:** Ein Knoten meldet sich aktiv ab.
 -   **`MSG_LOCAL_SYNC`:** Überträgt die Systemzeit, synchronisiert über NTP und einen UTC-Zeitstempel.
+
+## 5. Beispiel: Typische Startsequenz (gepaart)
+
+1.  **Discovery:** Client findet Server via DNS-SD.
+2.  **TCP-Verbindung:** Client baut TCP-Verbindung zum Server auf.
+3.  **Identifikation:** Beide Seiten senden ihre Deskriptoren (UID, Name etc.) via `MSG_LOCAL_LINK`.
+    -   Host (Client) → Knoten (Server): `MSG_LOCAL_LINK DESCRIPTOR_UID ...`
+    -   Knoten (Server) → Host (Client): `MSG_LOCAL_LINK DESCRIPTOR_UID ...`
+4.  **Pairing-Bestätigung:** Da beide Seiten sich bereits kennen, bestätigen sie den `paired`-Status.
+    -   Host → Knoten: `MSG_LOCAL_LINK STATUS_PAIRED ...`
+    -   Knoten → Host: `MSG_LOCAL_LINK STATUS_PAIRED ...`
+5.  **Logon:** Der Knoten meldet sich beim Host an.
+    -   Knoten → Host: `MSG_LOCAL_LOGON`
+6.  **Logon-Bestätigung:** Der Host akzeptiert die Anmeldung.
+    -   Host → Knoten: `MSG_LOCAL_LOGON_ACK`
+7.  **Protokollstart:** Der Host beginnt mit dem normalen BiDiB-Protokollstart.
+    -   Host → Knoten: `MSG_SYS_GET_MAGIC`

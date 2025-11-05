@@ -31,6 +31,7 @@ If `FEATURE_FW_UPDATE_MODE = 1`, an update typically proceeds as follows:
 ### 4.1. Downlink: Messages from Host to Node
 
 -   **MSG_FW_UPDATE_OP:** Initiates a firmware update operation.
+    -   **Example Message (Start Update):** `[MSG_FW_UPDATE_OP, 0x00, UID_Byte1, ..., UID_Byte7]`
     -   **Parameter `BIDIB_MSG_FW_UPDATE_OP_ENTER` (0x00):** Instructs the node to enter update mode. Requires the 7-byte Unique ID of the node.
     -   **Parameter `BIDIB_MSG_FW_UPDATE_OP_EXIT` (0x01):** Instructs the node to exit update mode and restart.
     -   **Parameter `BIDIB_MSG_FW_UPDATE_OP_SETDEST` (0x02):** Sets the destination memory area (e.g., 0 for Flash, 1 for EEPROM).

@@ -10,6 +10,10 @@ Occupancy detection is used to determine the location of vehicles, typically thr
 Due to the importance of occupancy information for safe operation, BiDiB offers several security mechanisms:
 -   **CRC and Sequence Numbers:** Secure the transmission.
 -   **Secure-ACK:** An extended acknowledgment procedure where the host mirrors received messages back to the detector. In case of discrepancies, the detector re-transmits the correct data.
+    -   **Example Flow:**
+        1.  **Node → Host:** `MSG_BM_OCC` (Detector 5 is occupied)
+        2.  **Host → Node:** `MSG_BM_MIRROR_OCC` (Acknowledge for detector 5)
+        3.  If the acknowledgment is not received, the node repeats the `MSG_BM_OCC` message.
 -   **'Confidence' Control:** The detector can report the "quality" of its detection (e.g., if it is disturbed by a short circuit).
 -   **'Alive' Control:** The interface monitors the connection to the detectors.
 

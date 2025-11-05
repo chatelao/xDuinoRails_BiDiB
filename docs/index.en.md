@@ -22,3 +22,7 @@ The protocol specification describes the messages and their meaning.
 The transport specification describes the physical transmission layers.
 
 - [Transport Protocols Overview](./en/transport/intro.md)
+
+## Examples
+
+- [Example of an Occupancy Message](./en/examples/occupancy_message.md)

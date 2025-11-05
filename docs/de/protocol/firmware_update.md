@@ -31,6 +31,7 @@ Wenn `FEATURE_FW_UPDATE_MODE = 1` ist, läuft ein Update typischerweise wie folg
 ### 4.1. Downlink: Nachrichten vom Host zum Knoten
 
 -   **MSG_FW_UPDATE_OP:** Leitet eine Firmware-Update-Operation ein.
+    -   **Beispiel-Nachricht (Update starten):** `[MSG_FW_UPDATE_OP, 0x00, UID_Byte1, ..., UID_Byte7]`
     -   **Parameter `BIDIB_MSG_FW_UPDATE_OP_ENTER` (0x00):** Weist den Knoten an, in den Update-Modus zu wechseln. Benötigt die 7-Byte Unique-ID des Knotens.
     -   **Parameter `BIDIB_MSG_FW_UPDATE_OP_EXIT` (0x01):** Weist den Knoten an, den Update-Modus zu verlassen und neu zu starten.
     -   **Parameter `BIDIB_MSG_FW_UPDATE_OP_SETDEST` (0x02):** Legt den Zielspeicherbereich fest (z.B. 0 für Flash, 1 für EEPROM).

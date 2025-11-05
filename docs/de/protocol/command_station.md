@@ -30,6 +30,10 @@ Um den unkontrollierten Weiterbetrieb von Zügen bei einem Verbindungsabbruch zu
 -   **MSG_CS_ALLOCATE:** Sperrt den Knoten für Befehle von anderen lokalen Adressen (für 2s gültig).
 -   **MSG_CS_SET_STATE:** Stellt den Zustand der Gleisausgabe ein (OFF, STOP, GO, PROG, etc.).
 -   **MSG_CS_DRIVE:** Sendet Fahrbefehle (Adresse, Format, Geschwindigkeit, Funktionen F0-F28).
+    -   **Geschwindigkeitskodierung:** Die Geschwindigkeit wird immer als 7-Bit-Wert (0-127) plus ein Richtungsbit übergeben, analog zum DCC128-Format. Die Umrechnung in andere Formate (z.B. DCC28) erfolgt im Knoten.
+        -   `0`: Halt
+        -   `1`: Nothalt
+        -   `2-127`: Fahrstufen
 -   **MSG_CS_ACCESSORY:** Steuert Zubehördekoder über das DCC-Gleissignal.
 -   **MSG_CS_POM:** Sendet Programmierbefehle für das Hauptgleis (Program on Main).
 -   **MSG_CS_BIN_STATE:** Löst einzelne Aktionen bei einem Fahrzeugdekoder aus (z.B. Kupplung).

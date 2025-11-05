@@ -34,3 +34,20 @@ A series of `MSG_LOCAL_...` messages are used to manage the connection state:
 -   **`MSG_LOCAL_LOGON_REJECTED`:** The interface rejects the logon or terminates an existing control relationship.
 -   **`MSG_LOCAL_LOGOFF`:** A node actively logs off.
 -   **`MSG_LOCAL_SYNC`:** Transmits the system time, synchronized via NTP and a UTC timestamp.
+
+## 5. Example: Typical Startup Sequence (Paired)
+
+1.  **Discovery:** Client finds server via DNS-SD.
+2.  **TCP Connection:** Client establishes a TCP connection to the server.
+3.  **Identification:** Both sides send their descriptors (UID, name, etc.) via `MSG_LOCAL_LINK`.
+    -   Host (Client) → Node (Server): `MSG_LOCAL_LINK DESCRIPTOR_UID ...`
+    -   Node (Server) → Host (Client): `MSG_LOCAL_LINK DESCRIPTOR_UID ...`
+4.  **Pairing Confirmation:** Since both sides already trust each other, they confirm the `paired` status.
+    -   Host → Node: `MSG_LOCAL_LINK STATUS_PAIRED ...`
+    -   Node → Host: `MSG_LOCAL_LINK STATUS_PAIRED ...`
+5.  **Logon:** The node logs on to the host.
+    -   Node → Host: `MSG_LOCAL_LOGON`
+6.  **Logon Acknowledgment:** The host accepts the logon.
+    -   Host → Node: `MSG_LOCAL_LOGON_ACK`
+7.  **Protocol Start:** The host begins the normal BiDiB protocol startup.
+    -   Host → Node: `MSG_SYS_GET_MAGIC`

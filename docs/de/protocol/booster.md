@@ -25,6 +25,7 @@ Booster-Befehle (`MSG_BOOST_ON`/`MSG_BOOST_OFF`) werden vom Host typischerweise 
 ### 3.1. Downlink: Nachrichten vom Host zum Knoten
 
 -   **MSG_BOOST_ON:** Schaltet die Gleisspannung ein. Ein Parameter (`UNICAST`) steuert, ob der Befehl an alle (Broadcast) oder nur an den adressierten Booster gesendet wird.
+    -   **Beispiel-Nachricht (Broadcast):** `[MSG_BOOST_ON, 0x00]`
 -   **MSG_BOOST_OFF:** Schaltet die Gleisspannung aus (ebenfalls mit `UNICAST`-Parameter).
 -   **MSG_BOOST_QUERY:** Frägt den Status und ggf. Diagnosewerte des Boosters ab.
 

@@ -30,6 +30,10 @@ To prevent the uncontrolled operation of trains in the event of a connection los
 -   **MSG_CS_ALLOCATE:** Locks the node for commands from other local addresses (valid for 2s).
 -   **MSG_CS_SET_STATE:** Sets the state of the command station (OFF, STOP, GO, PROG, etc.).
 -   **MSG_CS_DRIVE:** Sends drive commands (address, format, speed, functions F0-F28).
+    -   **Speed Encoding:** The speed is always transmitted as a 7-bit value (0-127) plus a direction bit, analogous to the DCC128 format. The conversion to other formats (e.g., DCC28) is done by the node.
+        -   `0`: Stop
+        -   `1`: Emergency Stop
+        -   `2-127`: Speed steps
 -   **MSG_CS_ACCESSORY:** Controls accessory decoders via the DCC track signal.
 -   **MSG_CS_POM:** Sends programming commands for the main track (Program on Main).
 -   **MSG_CS_BIN_STATE:** Triggers individual actions on a vehicle decoder (e.g., coupler).
