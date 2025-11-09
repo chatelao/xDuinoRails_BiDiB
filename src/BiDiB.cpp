@@ -29,22 +29,22 @@ void BiDiB::updateCrc(uint8_t byte, uint8_t &crc) {
     crc = crc8_table[crc ^ byte];
 }
 
-void BiDiB::sendByte(uint8_t byte, Stream &serial, uint8_t &crc) {
+void BiDiB::sendByte(uint8_t byte, uint8_t &crc) {
     updateCrc(byte, crc);
     if (byte == BIDIB_MAGIC || byte == BIDIB_ESCAPE) {
-        serial.write(BIDIB_ESCAPE);
-        serial.write(byte ^ 0x20);
+        bidib_serial->write(BIDIB_ESCAPE);
+        bidib_serial->write(byte ^ 0x20);
     } else {
-        serial.write(byte);
+        bidib_serial->write(byte);
     }
 }
 
-void BiDiB::sendMessage(const BiDiBMessage& msg, Stream &serial) {
+void BiDiB::sendMessage(const BiDiBMessage& msg) {
     uint8_t crc = 0;
 
-    serial.write(BIDIB_MAGIC);
+    bidib_serial->write(BIDIB_MAGIC);
 
-    sendByte(msg.length, serial, crc);
+    sendByte(msg.length, crc);
 
     // Adress-Stack senden (falls vorhanden)
     uint8_t addr_len = 0;
@@ -52,75 +52,88 @@ void BiDiB::sendMessage(const BiDiBMessage& msg, Stream &serial) {
         addr_len++;
     }
     for (int i = 0; i < addr_len; ++i) {
-        sendByte(msg.address[i], serial, crc);
+        sendByte(msg.address[i], crc);
     }
 
-    sendByte(msg.msg_num, serial, crc);
-    sendByte(msg.msg_type, serial, crc);
+    sendByte(msg.msg_num, crc);
+    sendByte(msg.msg_type, crc);
 
     // Daten-Bytes senden
     uint8_t data_len = msg.length - addr_len - 2; // Länge - Adresslänge - MSG_NUM - MSG_TYPE
     for (int i = 0; i < data_len; ++i) {
-        sendByte(msg.data[i], serial, crc);
+        sendByte(msg.data[i], crc);
     }
 
     // CRC senden (wird ebenfalls escaped)
     if (crc == BIDIB_MAGIC || crc == BIDIB_ESCAPE) {
-        serial.write(BIDIB_ESCAPE);
-        serial.write(crc ^ 0x20);
+        bidib_serial->write(BIDIB_ESCAPE);
+        bidib_serial->write(crc ^ 0x20);
     } else {
-        serial.write(crc);
+        bidib_serial->write(crc);
     }
 
-    serial.write(BIDIB_MAGIC);
+    bidib_serial->write(BIDIB_MAGIC);
 }
 
-bool BiDiB::receiveMessage(Stream &serial, BiDiBMessage& msg) {
-    if (serial.read() != BIDIB_MAGIC) {
+bool BiDiB::receiveMessage(BiDiBMessage& msg) {
+    if (bidib_serial->read() != BIDIB_MAGIC) {
         return false;
     }
 
     uint8_t crc = 0;
 
     // Helper lambda to read a content byte, handle un-escaping, and update CRC
-    auto readContentByte = [&](Stream& s) {
-        uint8_t byte = s.read();
+    auto readContentByte = [&]() {
+        uint8_t byte = bidib_serial->read();
         if (byte == BIDIB_ESCAPE) {
-            byte = s.read() ^ 0x20;
+            byte = bidib_serial->read() ^ 0x20;
         }
         updateCrc(byte, crc);
         return byte;
     };
 
-    msg.length = readContentByte(serial);
+    msg.length = readContentByte();
 
     uint8_t addr_len = 0;
     for (int i = 0; i < 4; ++i) {
-        msg.address[i] = readContentByte(serial);
+        msg.address[i] = readContentByte();
         addr_len++;
         if (msg.address[i] == 0) {
             break;
         }
     }
 
-    msg.msg_num = readContentByte(serial);
-    msg.msg_type = readContentByte(serial);
+    msg.msg_num = readContentByte();
+    msg.msg_type = readContentByte();
 
     uint8_t data_len = msg.length - addr_len - 2;
     for (int i = 0; i < data_len; ++i) {
-        msg.data[i] = readContentByte(serial);
+        msg.data[i] = readContentByte();
     }
 
     // Read the CRC byte, which could also be escaped
-    uint8_t received_crc = serial.read();
+    uint8_t received_crc = bidib_serial->read();
     if (received_crc == BIDIB_ESCAPE) {
-        received_crc = serial.read() ^ 0x20;
+        received_crc = bidib_serial->read() ^ 0x20;
     }
 
     // The next byte must be the trailing MAGIC
-    if (serial.read() != BIDIB_MAGIC) {
+    if (bidib_serial->read() != BIDIB_MAGIC) {
         return false; // Malformed message
     }
 
     return crc == received_crc;
+}
+
+void BiDiB::begin(Stream &serial) {
+    bidib_serial = &serial;
+}
+
+void BiDiB::update() {
+    while (bidib_serial->available() > 0) {
+        BiDiBMessage msg;
+        if (receiveMessage(msg)) {
+            // Message received successfully, handle it here
+        }
+    }
 }

@@ -20,18 +20,26 @@ class BiDiB {
 public:
     BiDiB();
 
-    // Sendet eine vollständige, formatierte BiDiB-Nachricht
-    void sendMessage(const BiDiBMessage& msg, Stream &serial);
+    // Initialisiert die BiDiB-Instanz mit einem seriellen Port
+    void begin(Stream &serial);
 
-    // Empfängt und validiert eine BiDiB-Nachricht
-    bool receiveMessage(Stream &serial, BiDiBMessage& msg);
+    // Verarbeitet eingehende Daten und muss regelmäßig aufgerufen werden
+    void update();
+
+    // Sendet eine vollständige, formatierte BiDiB-Nachricht
+    void sendMessage(const BiDiBMessage& msg);
 
 private:
+    // Empfängt und validiert eine BiDiB-Nachricht
+    bool receiveMessage(BiDiBMessage& msg);
+
     // Sendet ein einzelnes Byte und wendet bei Bedarf das Escaping an
-    void sendByte(uint8_t byte, Stream &serial, uint8_t &crc);
+    void sendByte(uint8_t byte, uint8_t &crc);
 
     // Hilfsmethode zur Aktualisierung der CRC-Prüfsumme
     void updateCrc(uint8_t byte, uint8_t &crc);
+
+    Stream* bidib_serial;
 };
 
 #endif
