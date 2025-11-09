@@ -39,29 +39,29 @@ void BiDiB::sendByte(uint8_t byte, Stream &serial, uint8_t &crc) {
     }
 }
 
-void BiDiB::sendMessage(uint8_t length, uint8_t* address, uint8_t msg_num, uint8_t msg_type, uint8_t* data, Stream &serial) {
+void BiDiB::sendMessage(const BiDiBMessage& msg, Stream &serial) {
     uint8_t crc = 0;
 
     serial.write(BIDIB_MAGIC);
 
-    sendByte(length, serial, crc);
+    sendByte(msg.length, serial, crc);
 
     // Adress-Stack senden (falls vorhanden)
     uint8_t addr_len = 0;
-    for (int i = 0; i < 4 && address[i] != 0; ++i) {
+    for (int i = 0; i < 4 && msg.address[i] != 0; ++i) {
         addr_len++;
     }
     for (int i = 0; i < addr_len; ++i) {
-        sendByte(address[i], serial, crc);
+        sendByte(msg.address[i], serial, crc);
     }
 
-    sendByte(msg_num, serial, crc);
-    sendByte(msg_type, serial, crc);
+    sendByte(msg.msg_num, serial, crc);
+    sendByte(msg.msg_type, serial, crc);
 
     // Daten-Bytes senden
-    uint8_t data_len = length - addr_len - 2; // Länge - Adresslänge - MSG_NUM - MSG_TYPE
+    uint8_t data_len = msg.length - addr_len - 2; // Länge - Adresslänge - MSG_NUM - MSG_TYPE
     for (int i = 0; i < data_len; ++i) {
-        sendByte(data[i], serial, crc);
+        sendByte(msg.data[i], serial, crc);
     }
 
     // CRC senden (wird ebenfalls escaped)
@@ -75,7 +75,52 @@ void BiDiB::sendMessage(uint8_t length, uint8_t* address, uint8_t msg_num, uint8
     serial.write(BIDIB_MAGIC);
 }
 
-bool BiDiB::receiveMessage(Stream &serial) {
-    // Implementierung für den Empfang folgt in einer späteren Phase
-    return false;
+bool BiDiB::receiveMessage(Stream &serial, BiDiBMessage& msg) {
+    if (serial.read() != BIDIB_MAGIC) {
+        return false;
+    }
+
+    uint8_t crc = 0;
+
+    // Helper lambda to read a content byte, handle un-escaping, and update CRC
+    auto readContentByte = [&](Stream& s) {
+        uint8_t byte = s.read();
+        if (byte == BIDIB_ESCAPE) {
+            byte = s.read() ^ 0x20;
+        }
+        updateCrc(byte, crc);
+        return byte;
+    };
+
+    msg.length = readContentByte(serial);
+
+    uint8_t addr_len = 0;
+    for (int i = 0; i < 4; ++i) {
+        msg.address[i] = readContentByte(serial);
+        addr_len++;
+        if (msg.address[i] == 0) {
+            break;
+        }
+    }
+
+    msg.msg_num = readContentByte(serial);
+    msg.msg_type = readContentByte(serial);
+
+    uint8_t data_len = msg.length - addr_len - 2;
+    for (int i = 0; i < data_len; ++i) {
+        msg.data[i] = readContentByte(serial);
+    }
+
+    // Read the CRC byte, which could also be escaped
+    uint8_t received_crc = serial.read();
+    if (received_crc == BIDIB_ESCAPE) {
+        received_crc = serial.read() ^ 0x20;
+    }
+
+    // The next byte must be the trailing MAGIC
+    if (serial.read() != BIDIB_MAGIC) {
+        return false; // Malformed message
+    }
+
+    return crc == received_crc;
 }
