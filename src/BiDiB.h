@@ -7,15 +7,24 @@
 const uint8_t BIDIB_MAGIC = 0xFE;
 const uint8_t BIDIB_ESCAPE = 0xFD;
 
+// Datenstruktur für eine BiDiB-Nachricht
+struct BiDiBMessage {
+    uint8_t length;
+    uint8_t address[4];
+    uint8_t msg_num;
+    uint8_t msg_type;
+    uint8_t data[64]; // Maximale Datenlänge annehmen
+};
+
 class BiDiB {
 public:
     BiDiB();
 
     // Sendet eine vollständige, formatierte BiDiB-Nachricht
-    void sendMessage(uint8_t length, uint8_t* address, uint8_t msg_num, uint8_t msg_type, uint8_t* data, Stream &serial);
+    void sendMessage(const BiDiBMessage& msg, Stream &serial);
 
-    // Empfängt und validiert eine BiDiB-Nachricht (noch nicht implementiert)
-    bool receiveMessage(Stream &serial);
+    // Empfängt und validiert eine BiDiB-Nachricht
+    bool receiveMessage(Stream &serial, BiDiBMessage& msg);
 
 private:
     // Sendet ein einzelnes Byte und wendet bei Bedarf das Escaping an
