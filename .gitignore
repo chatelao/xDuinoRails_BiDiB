@@ -1,0 +1,8 @@
+# PlatformIO
+.pio/
+.vscode/
+
+# Other
+*.DS_Store
+*.stackdump
+.idea/
