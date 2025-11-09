@@ -12,4 +12,5 @@ After completing a development phase or a significant feature, you **must** upda
 
 - **Arduino Library:** This project is planned as an Arduino library. The code should be structured accordingly (e.g., using a `src` directory for source files).
 - **PlatformIO:** The library must be compilable using PlatformIO.
-- **GitHub CI/CD:** A GitHub Actions workflow for continuous integration and deployment is required. This workflow must include a step to verify successful compilation with PlatformIO.
+- **GitHub CI/CD:** A GitHub Actions workflow for continuous integration and deployment is required. The workflow must compile every version on every branch with every push (`on: [push, pull_request]`). This workflow must include a step to verify successful compilation with PlatformIO.
+- **GitHub CI/CD (DE):** Ein GitHub-Actions-Workflow für die kontinuierliche Integration und Bereitstellung ist erforderlich. Der Workflow muss jede Version auf jedem Branch bei jedem Push kompilieren (`on: [push, pull_request]`). Dieser Workflow muss einen Schritt enthalten, um die erfolgreiche Kompilierung mit PlatformIO zu überprüfen.
