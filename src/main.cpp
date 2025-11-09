@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include "BiDiB.h"
 
+#ifndef UNIT_TEST
+
 BiDiB bidib;
 
 void setup() {
@@ -11,3 +13,5 @@ void setup() {
 void loop() {
   bidib.update();
 }
+
+#endif // UNIT_TEST
