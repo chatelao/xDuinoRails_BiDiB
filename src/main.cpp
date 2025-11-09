@@ -1,9 +1,13 @@
 #include <Arduino.h>
+#include "BiDiB.h"
+
+BiDiB bidib;
 
 void setup() {
-  // This is intentionally left empty.
+  Serial.begin(115200);
+  bidib.begin(Serial);
 }
 
 void loop() {
-  // This is intentionally left empty.
+  bidib.update();
 }

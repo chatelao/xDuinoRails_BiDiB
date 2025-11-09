@@ -18,8 +18,8 @@ Vor jeder neuen Implementierung ist dieses Dokument zu konsultieren. Nach Abschl
 - [x] **1.3. Nachrichten-Struktur:**
     - [x] Erstellung von Datenstrukturen zur Repräsentation von BiDiB-Nachrichten (`MSG_LENGTH`, `MSG_ADDR`, `MSG_NUM`, `MSG_TYPE`, `DATA`).
     - [x] Entwicklung von Funktionen zum Serialisieren (Erstellen eines Byte-Streams aus einer Nachrichten-Struktur) und Deserialisieren (Parsen eines Byte-Streams in eine Nachrichten-Struktur).
-- [ ] **1.4. Transport-Schicht:**
-    - [ ] Implementierung einer grundlegenden seriellen Kommunikation (UART) für die Verbindung zum BiDiB-Interface.
+- [x] **1.4. Transport-Schicht:**
+    - [x] Implementierung einer grundlegenden seriellen Kommunikation (UART) für die Verbindung zum BiDiB-Interface.
 
 ---
 
