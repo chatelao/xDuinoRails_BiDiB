@@ -21,7 +21,7 @@ static const uint8_t crc8_table[] = {
 };
 
 
-BiDiB::BiDiB() {
+BiDiB::BiDiB() : _messageAvailable(false) {
     // Konstruktor-Implementierung
 }
 
@@ -48,9 +48,13 @@ void BiDiB::sendMessage(const BiDiBMessage& msg) {
 
     // Adress-Stack senden (falls vorhanden)
     uint8_t addr_len = 0;
-    for (int i = 0; i < 4 && msg.address[i] != 0; ++i) {
+    for (int i = 0; i < 4; i++) {
         addr_len++;
+        if (msg.address[i] == 0) {
+            break;
+        }
     }
+
     for (int i = 0; i < addr_len; ++i) {
         sendByte(msg.address[i], crc);
     }
@@ -131,9 +135,17 @@ void BiDiB::begin(Stream &serial) {
 
 void BiDiB::update() {
     while (bidib_serial->available() > 0) {
-        BiDiBMessage msg;
-        if (receiveMessage(msg)) {
-            // Message received successfully, handle it here
+        if (receiveMessage(_lastMessage)) {
+            _messageAvailable = true;
         }
     }
+}
+
+bool BiDiB::messageAvailable() {
+    return _messageAvailable;
+}
+
+BiDiBMessage BiDiB::getLastMessage() {
+    _messageAvailable = false; // Reset the flag
+    return _lastMessage;
 }

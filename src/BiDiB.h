@@ -29,6 +29,12 @@ public:
     // Sendet eine vollständige, formatierte BiDiB-Nachricht
     void sendMessage(const BiDiBMessage& msg);
 
+    // Returns true if a message has been received and is waiting to be processed
+    bool messageAvailable();
+
+    // Returns the last received message
+    BiDiBMessage getLastMessage();
+
 private:
     // Empfängt und validiert eine BiDiB-Nachricht
     bool receiveMessage(BiDiBMessage& msg);
@@ -40,6 +46,8 @@ private:
     void updateCrc(uint8_t byte, uint8_t &crc);
 
     Stream* bidib_serial;
+    BiDiBMessage _lastMessage;
+    bool _messageAvailable;
 };
 
 #endif
