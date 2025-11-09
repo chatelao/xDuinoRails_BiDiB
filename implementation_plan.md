@@ -10,11 +10,11 @@ Vor jeder neuen Implementierung ist dieses Dokument zu konsultieren. Nach Abschl
 
 **Ziel:** Eine solide Basis für die gesamte Kommunikation schaffen. In dieser Phase wird die grundlegende Fähigkeit implementiert, valide BiDiB-Nachrichten zu erstellen und zu parsen.
 
-- [ ] **1.1. Nachrichten-Framing:**
-    - [ ] Implementierung der `MAGIC`-Bytes (0xFE) zur Erkennung von Nachrichtenanfang und -ende.
-    - [ ] Implementierung des Escape-Mechanismus für `0xFE` und `0xFD`.
-- [ ] **1.2. Datensicherung:**
-    - [ ] Implementierung der CRC8-Prüfsummenberechnung (Polynom: `0x31`).
+- [x] **1.1. Nachrichten-Framing:**
+    - [x] Implementierung der `MAGIC`-Bytes (0xFE) zur Erkennung von Nachrichtenanfang und -ende.
+    - [x] Implementierung des Escape-Mechanismus für `0xFE` und `0xFD`.
+- [x] **1.2. Datensicherung:**
+    - [x] Implementierung der CRC8-Prüfsummenberechnung (Polynom: `0x31`).
 - [ ] **1.3. Nachrichten-Struktur:**
     - [ ] Erstellung von Datenstrukturen zur Repräsentation von BiDiB-Nachrichten (`MSG_LENGTH`, `MSG_ADDR`, `MSG_NUM`, `MSG_TYPE`, `DATA`).
     - [ ] Entwicklung von Funktionen zum Serialisieren (Erstellen eines Byte-Streams aus einer Nachrichten-Struktur) und Deserialisieren (Parsen eines Byte-Streams in eine Nachrichten-Struktur).
