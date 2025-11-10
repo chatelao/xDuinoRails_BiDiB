@@ -22,7 +22,59 @@ static const uint8_t crc8_table[] = {
 
 
 BiDiB::BiDiB() : _messageAvailable(false) {
-    // Konstruktor-Implementierung
+    // Initialize unique_id with a placeholder.
+    // In a real application, this should be a truly unique value.
+    unique_id[0] = 0x80; // Vendor ID (e.g., private use)
+    unique_id[1] = 0x01; // Product ID
+    unique_id[2] = 0x02;
+    unique_id[3] = 0x03;
+    unique_id[4] = 0x04;
+    unique_id[5] = 0x05;
+    unique_id[6] = 0x06;
+}
+
+void BiDiB::handleMessages() {
+    if (!messageAvailable()) {
+        return;
+    }
+
+    BiDiBMessage msg = getLastMessage();
+
+    switch (msg.msg_type) {
+        case MSG_SYS_GET_MAGIC: {
+            BiDiBMessage response;
+            response.length = 4; // 1 (addr) + 1 (data) + 2 (num, type)
+            response.address[0] = 0;
+            response.msg_num = msg.msg_num; // Echo message number
+            response.msg_type = MSG_SYS_MAGIC;
+            response.data[0] = 0xAF; // BIDIB_SYS_MAGIC
+            sendMessage(response);
+            break;
+        }
+        case MSG_SYS_GET_P_VERSION: {
+            BiDiBMessage response;
+            response.length = 5; // 1 (addr) + 2 (data) + 2 (num, type)
+            response.address[0] = 0;
+            response.msg_num = msg.msg_num;
+            response.msg_type = MSG_SYS_P_VERSION;
+            response.data[0] = protocol_version[1]; // Minor
+            response.data[1] = protocol_version[0]; // Major
+            sendMessage(response);
+            break;
+        }
+        case MSG_SYS_GET_UNIQUE_ID: {
+            BiDiBMessage response;
+            response.length = 10; // 1 (addr) + 7 (data) + 2 (num, type)
+            response.address[0] = 0;
+            response.msg_num = msg.msg_num;
+            response.msg_type = MSG_SYS_UNIQUE_ID;
+            for(int i=0; i<7; ++i) {
+                response.data[i] = unique_id[i];
+            }
+            sendMessage(response);
+            break;
+        }
+    }
 }
 
 void BiDiB::updateCrc(uint8_t byte, uint8_t &crc) {
@@ -134,7 +186,7 @@ void BiDiB::begin(Stream &serial) {
 }
 
 void BiDiB::update() {
-    while (bidib_serial->available() > 0) {
+    if (bidib_serial->available() > 0) {
         if (receiveMessage(_lastMessage)) {
             _messageAvailable = true;
         }

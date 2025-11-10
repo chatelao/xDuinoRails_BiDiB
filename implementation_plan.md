@@ -27,11 +27,11 @@ Vor jeder neuen Implementierung ist dieses Dokument zu konsultieren. Nach Abschl
 
 **Ziel:** Die grundlegende Interaktion mit dem BiDiB-Bus ermöglichen, Knoten erkennen und deren Eigenschaften auslesen.
 
-- [ ] **2.1. System-Nachrichten (Basis):**
-    - [ ] Implementierung der grundlegenden System-Nachrichten für den Verbindungsaufbau:
-        - [ ] `MSG_SYS_GET_MAGIC` / `MSG_SYS_MAGIC`
-        - [ ] `MSG_SYS_GET_P_VERSION` / `MSG_SYS_P_VERSION`
-        - [ ] `MSG_SYS_GET_UNIQUE_ID` / `MSG_SYS_UNIQUE_ID`
+- [x] **2.1. System-Nachrichten (Basis):**
+    - [x] Implementierung der grundlegenden System-Nachrichten für den Verbindungsaufbau:
+        - [x] `MSG_SYS_GET_MAGIC` / `MSG_SYS_MAGIC`
+        - [x] `MSG_SYS_GET_P_VERSION` / `MSG_SYS_P_VERSION`
+        - [x] `MSG_SYS_GET_UNIQUE_ID` / `MSG_SYS_UNIQUE_ID`
 - [ ] **2.2. Knoten-Management:**
     - [ ] Implementierung der Logon-Sequenz.
     - [ ] Verwaltung der Knotentabelle (`MSG_NODETAB_GETALL`, `MSG_NODETAB_GETNEXT` / `MSG_NODETAB_COUNT`, `MSG_NODETAB`).

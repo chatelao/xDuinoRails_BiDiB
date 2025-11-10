@@ -7,6 +7,16 @@
 const uint8_t BIDIB_MAGIC = 0xFE;
 const uint8_t BIDIB_ESCAPE = 0xFD;
 
+// BiDiB Message Types
+// --- System Messages ---
+const uint8_t MSG_SYS_GET_MAGIC     = 1;
+const uint8_t MSG_SYS_GET_P_VERSION = 2;
+const uint8_t MSG_SYS_GET_UNIQUE_ID = 3;
+const uint8_t MSG_SYS_MAGIC         = 129; // 0x81
+const uint8_t MSG_SYS_P_VERSION     = 130; // 0x82
+const uint8_t MSG_SYS_UNIQUE_ID     = 131; // 0x83
+
+
 // Datenstruktur für eine BiDiB-Nachricht
 struct BiDiBMessage {
     uint8_t length;
@@ -26,6 +36,9 @@ public:
     // Verarbeitet eingehende Daten und muss regelmäßig aufgerufen werden
     void update();
 
+    // Verarbeitet die letzte empfangene Nachricht
+    void handleMessages();
+
     // Sendet eine vollständige, formatierte BiDiB-Nachricht
     void sendMessage(const BiDiBMessage& msg);
 
@@ -34,6 +47,9 @@ public:
 
     // Returns the last received message
     BiDiBMessage getLastMessage();
+
+    // Node properties
+    uint8_t unique_id[7];
 
 private:
     // Empfängt und validiert eine BiDiB-Nachricht
@@ -48,6 +64,7 @@ private:
     Stream* bidib_serial;
     BiDiBMessage _lastMessage;
     bool _messageAvailable;
+    uint8_t protocol_version[2] = {0, 1}; // V 0.1
 };
 
 #endif
