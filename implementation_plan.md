@@ -51,9 +51,9 @@ Vor jeder neuen Implementierung ist dieses Dokument zu konsultieren. Nach Abschl
 - [x] **3.1. Gleis-Zustand:**
     - [x] Implementierung von `MSG_CS_SET_STATE` zur Steuerung der Gleisspannung (GO, STOP, OFF).
     - [x] Handling von `MSG_CS_STATE`-Antworten.
-- [ ] **3.2. Lok-Steuerung:**
-    - [ ] Implementierung von `MSG_CS_DRIVE` zur Steuerung von Geschwindigkeit und Funktionen.
-    - [ ] Handling von `MSG_CS_DRIVE_ACK`-Quittungen.
+- [x] **3.2. Lok-Steuerung:**
+    - [x] Implementierung von `MSG_CS_DRIVE` zur Steuerung von Geschwindigkeit und Funktionen.
+    - [x] Handling von `MSG_CS_DRIVE_ACK`-Quittungen.
 - [ ] **3.3. DCC-Zubehör:**
     - [ ] Implementierung von `MSG_CS_ACCESSORY` zur Steuerung von Weichen und Signalen über das Gleissignal.
     - [ ] Handling von `MSG_CS_ACCESSORY_ACK`-Quittungen.
