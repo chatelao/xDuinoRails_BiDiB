@@ -37,6 +37,14 @@ const uint8_t MSG_FEATURE_COUNT     = 140; // 0x8C
 const uint8_t MSG_FEATURE           = 141; // 0x8D
 const uint8_t MSG_FEATURE_NA        = 142; // 0x8E
 
+// --- Command Station Messages ---
+const uint8_t MSG_CS_SET_STATE      = 0x48;
+const uint8_t MSG_CS_STATE          = 0xE9; // 0x89
+
+// --- Command Station Constants ---
+const uint8_t BIDIB_CS_STATE_OFF    = 0;
+const uint8_t BIDIB_CS_STATE_STOP   = 1;
+const uint8_t BIDIB_CS_STATE_GO     = 2;
 
 // Datenstruktur für eine BiDiB-Nachricht
 struct BiDiBMessage {
@@ -102,6 +110,9 @@ public:
     // Get a feature value
     uint8_t getFeature(uint8_t feature_num);
 
+    // Command Station functions
+    void setTrackState(uint8_t state);
+
     // Node properties
     uint8_t unique_id[7];
     uint8_t node_table_version;
@@ -117,6 +128,7 @@ protected:
     BiDiBNode _node_table[BIDIB_MAX_NODES];
     uint8_t _node_count;
     bool _isLoggedIn;
+    uint8_t _track_state;
 
 private:
     // Empfängt und validiert eine BiDiB-Nachricht

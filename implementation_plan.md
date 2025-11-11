@@ -48,9 +48,9 @@ Vor jeder neuen Implementierung ist dieses Dokument zu konsultieren. Nach Abschl
 
 **Ziel:** Die Steuerung von Lokomotiven und DCC-Zubehör über das Gleissignal ermöglichen.
 
-- [ ] **3.1. Gleis-Zustand:**
-    - [ ] Implementierung von `MSG_CS_SET_STATE` zur Steuerung der Gleisspannung (GO, STOP, OFF).
-    - [ ] Handling von `MSG_CS_STATE`-Antworten.
+- [x] **3.1. Gleis-Zustand:**
+    - [x] Implementierung von `MSG_CS_SET_STATE` zur Steuerung der Gleisspannung (GO, STOP, OFF).
+    - [x] Handling von `MSG_CS_STATE`-Antworten.
 - [ ] **3.2. Lok-Steuerung:**
     - [ ] Implementierung von `MSG_CS_DRIVE` zur Steuerung von Geschwindigkeit und Funktionen.
     - [ ] Handling von `MSG_CS_DRIVE_ACK`-Quittungen.
