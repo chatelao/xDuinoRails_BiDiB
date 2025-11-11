@@ -39,6 +39,8 @@ const uint8_t MSG_FEATURE_NA        = 142; // 0x8E
 
 // --- Command Station Messages ---
 const uint8_t MSG_CS_SET_STATE      = 0x48;
+const uint8_t MSG_CS_DRIVE          = 0x40;
+const uint8_t MSG_CS_DRIVE_ACK      = 0xE0;
 const uint8_t MSG_CS_STATE          = 0xE9; // 0x89
 
 // --- Command Station Constants ---
@@ -112,6 +114,7 @@ public:
 
     // Command Station functions
     void setTrackState(uint8_t state);
+    void drive(uint16_t address, int8_t speed, uint8_t functions);
 
     // Node properties
     uint8_t unique_id[7];

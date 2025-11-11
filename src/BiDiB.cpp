@@ -44,6 +44,20 @@ BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false), _system_enabled(t
     _track_state = BIDIB_CS_STATE_OFF;
 }
 
+void BiDiB::drive(uint16_t address, int8_t speed, uint8_t functions) {
+    BiDiBMessage msg;
+    msg.length = 8;
+    msg.address[0] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_CS_DRIVE;
+    msg.data[0] = address & 0xFF;
+    msg.data[1] = (address >> 8) & 0xFF;
+    msg.data[2] = 2; // DCC128 format
+    msg.data[3] = speed;
+    msg.data[4] = functions;
+    sendMessage(msg);
+}
+
 void BiDiB::setTrackState(uint8_t state) {
     BiDiBMessage msg;
     msg.length = 4;
@@ -308,6 +322,10 @@ void BiDiB::handleMessages() {
         }
         case MSG_CS_STATE: {
             _track_state = msg.data[0];
+            break;
+        }
+        case MSG_CS_DRIVE_ACK: {
+            // No action needed for this message
             break;
         }
     }
