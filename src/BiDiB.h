@@ -12,9 +12,14 @@ const uint8_t BIDIB_ESCAPE = 0xFD;
 const uint8_t MSG_SYS_GET_MAGIC     = 1;
 const uint8_t MSG_SYS_GET_P_VERSION = 2;
 const uint8_t MSG_SYS_GET_UNIQUE_ID = 3;
+const uint8_t MSG_NODETAB_GETALL    = 6;
+const uint8_t MSG_NODETAB_GETNEXT   = 7;
 const uint8_t MSG_SYS_MAGIC         = 129; // 0x81
 const uint8_t MSG_SYS_P_VERSION     = 130; // 0x82
 const uint8_t MSG_SYS_UNIQUE_ID     = 131; // 0x83
+const uint8_t MSG_NODETAB_COUNT     = 134; // 0x86
+const uint8_t MSG_NODETAB           = 135; // 0x87
+const uint8_t MSG_NODE_NA           = 136; // 0x88
 
 
 // Datenstruktur für eine BiDiB-Nachricht
@@ -48,8 +53,13 @@ public:
     // Returns the last received message
     BiDiBMessage getLastMessage();
 
+    // Helper to calculate CRC for testing
+    uint8_t calculateCrc(const uint8_t* data, size_t size);
+
     // Node properties
     uint8_t unique_id[7];
+    uint8_t node_table_version;
+    uint8_t node_count;
 
 private:
     // Empfängt und validiert eine BiDiB-Nachricht

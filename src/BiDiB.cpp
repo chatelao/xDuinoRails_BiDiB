@@ -23,58 +23,81 @@ static const uint8_t crc8_table[] = {
 
 BiDiB::BiDiB() : _messageAvailable(false) {
     // Initialize unique_id with a placeholder.
-    // In a real application, this should be a truly unique value.
-    unique_id[0] = 0x80; // Vendor ID (e.g., private use)
-    unique_id[1] = 0x01; // Product ID
-    unique_id[2] = 0x02;
-    unique_id[3] = 0x03;
-    unique_id[4] = 0x04;
-    unique_id[5] = 0x05;
+    unique_id[0] = 0x80; unique_id[1] = 0x01; unique_id[2] = 0x02;
+    unique_id[3] = 0x03; unique_id[4] = 0x04; unique_id[5] = 0x05;
     unique_id[6] = 0x06;
+
+    node_table_version = 0;
+    node_count = 0;
 }
 
 void BiDiB::handleMessages() {
-    if (!messageAvailable()) {
-        return;
-    }
+    if (!messageAvailable()) { return; }
 
     BiDiBMessage msg = getLastMessage();
 
     switch (msg.msg_type) {
         case MSG_SYS_GET_MAGIC: {
             BiDiBMessage response;
-            response.length = 4; // 1 (addr) + 1 (data) + 2 (num, type)
+            response.length = 4;
             response.address[0] = 0;
-            response.msg_num = msg.msg_num; // Echo message number
+            response.msg_num = msg.msg_num;
             response.msg_type = MSG_SYS_MAGIC;
-            response.data[0] = 0xAF; // BIDIB_SYS_MAGIC
+            response.data[0] = 0xAF;
             sendMessage(response);
             break;
         }
         case MSG_SYS_GET_P_VERSION: {
             BiDiBMessage response;
-            response.length = 5; // 1 (addr) + 2 (data) + 2 (num, type)
+            response.length = 5;
             response.address[0] = 0;
             response.msg_num = msg.msg_num;
             response.msg_type = MSG_SYS_P_VERSION;
-            response.data[0] = protocol_version[1]; // Minor
-            response.data[1] = protocol_version[0]; // Major
+            response.data[0] = protocol_version[1];
+            response.data[1] = protocol_version[0];
             sendMessage(response);
             break;
         }
         case MSG_SYS_GET_UNIQUE_ID: {
             BiDiBMessage response;
-            response.length = 10; // 1 (addr) + 7 (data) + 2 (num, type)
+            response.length = 10;
             response.address[0] = 0;
             response.msg_num = msg.msg_num;
             response.msg_type = MSG_SYS_UNIQUE_ID;
-            for(int i=0; i<7; ++i) {
-                response.data[i] = unique_id[i];
-            }
+            for(int i=0; i<7; ++i) { response.data[i] = unique_id[i]; }
+            sendMessage(response);
+            break;
+        }
+        case MSG_NODETAB_GETALL: {
+            BiDiBMessage response;
+            response.length = 5;
+            response.address[0] = 0;
+            response.msg_num = msg.msg_num;
+            response.msg_type = MSG_NODETAB_COUNT;
+            response.data[0] = node_table_version;
+            response.data[1] = node_count;
+            sendMessage(response);
+            break;
+        }
+        case MSG_NODETAB_GETNEXT: {
+            BiDiBMessage response;
+            response.length = 4;
+            response.address[0] = 0;
+            response.msg_num = msg.msg_num;
+            response.msg_type = MSG_NODE_NA;
+            response.data[0] = 0;
             sendMessage(response);
             break;
         }
     }
+}
+
+uint8_t BiDiB::calculateCrc(const uint8_t* data, size_t size) {
+    uint8_t crc = 0;
+    for (size_t i = 0; i < size; ++i) {
+        updateCrc(data[i], crc);
+    }
+    return crc;
 }
 
 void BiDiB::updateCrc(uint8_t byte, uint8_t &crc) {
@@ -93,91 +116,50 @@ void BiDiB::sendByte(uint8_t byte, uint8_t &crc) {
 
 void BiDiB::sendMessage(const BiDiBMessage& msg) {
     uint8_t crc = 0;
-
     bidib_serial->write(BIDIB_MAGIC);
-
     sendByte(msg.length, crc);
-
-    // Adress-Stack senden (falls vorhanden)
     uint8_t addr_len = 0;
     for (int i = 0; i < 4; i++) {
         addr_len++;
-        if (msg.address[i] == 0) {
-            break;
-        }
+        if (msg.address[i] == 0) break;
     }
-
-    for (int i = 0; i < addr_len; ++i) {
-        sendByte(msg.address[i], crc);
-    }
-
+    for (int i = 0; i < addr_len; ++i) { sendByte(msg.address[i], crc); }
     sendByte(msg.msg_num, crc);
     sendByte(msg.msg_type, crc);
-
-    // Daten-Bytes senden
-    uint8_t data_len = msg.length - addr_len - 2; // Länge - Adresslänge - MSG_NUM - MSG_TYPE
-    for (int i = 0; i < data_len; ++i) {
-        sendByte(msg.data[i], crc);
-    }
-
-    // CRC senden (wird ebenfalls escaped)
+    uint8_t data_len = msg.length - addr_len - 2;
+    for (int i = 0; i < data_len; ++i) { sendByte(msg.data[i], crc); }
     if (crc == BIDIB_MAGIC || crc == BIDIB_ESCAPE) {
         bidib_serial->write(BIDIB_ESCAPE);
         bidib_serial->write(crc ^ 0x20);
     } else {
         bidib_serial->write(crc);
     }
-
     bidib_serial->write(BIDIB_MAGIC);
 }
 
 bool BiDiB::receiveMessage(BiDiBMessage& msg) {
-    if (bidib_serial->read() != BIDIB_MAGIC) {
-        return false;
-    }
-
+    if (bidib_serial->read() != BIDIB_MAGIC) { return false; }
     uint8_t crc = 0;
-
-    // Helper lambda to read a content byte, handle un-escaping, and update CRC
     auto readContentByte = [&]() {
         uint8_t byte = bidib_serial->read();
-        if (byte == BIDIB_ESCAPE) {
-            byte = bidib_serial->read() ^ 0x20;
-        }
+        if (byte == BIDIB_ESCAPE) { byte = bidib_serial->read() ^ 0x20; }
         updateCrc(byte, crc);
         return byte;
     };
-
     msg.length = readContentByte();
-
     uint8_t addr_len = 0;
     for (int i = 0; i < 4; ++i) {
         msg.address[i] = readContentByte();
         addr_len++;
-        if (msg.address[i] == 0) {
-            break;
-        }
+        if (msg.address[i] == 0) break;
     }
-
     msg.msg_num = readContentByte();
     msg.msg_type = readContentByte();
-
     uint8_t data_len = msg.length - addr_len - 2;
-    for (int i = 0; i < data_len; ++i) {
-        msg.data[i] = readContentByte();
-    }
-
-    // Read the CRC byte, which could also be escaped
+    for (int i = 0; i < data_len; ++i) { msg.data[i] = readContentByte(); }
     uint8_t received_crc = bidib_serial->read();
-    if (received_crc == BIDIB_ESCAPE) {
-        received_crc = bidib_serial->read() ^ 0x20;
-    }
-
-    // The next byte must be the trailing MAGIC
-    if (bidib_serial->read() != BIDIB_MAGIC) {
-        return false; // Malformed message
-    }
-
+    if (received_crc == BIDIB_ESCAPE) { received_crc = bidib_serial->read() ^ 0x20; }
+    if (bidib_serial->read() != BIDIB_MAGIC) { return false; }
     return crc == received_crc;
 }
 
@@ -198,6 +180,6 @@ bool BiDiB::messageAvailable() {
 }
 
 BiDiBMessage BiDiB::getLastMessage() {
-    _messageAvailable = false; // Reset the flag
+    _messageAvailable = false;
     return _lastMessage;
 }
