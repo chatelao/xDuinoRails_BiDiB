@@ -62,6 +62,15 @@ public:
         }
     }
 
+    int read_outgoing() {
+        if (outgoing.empty()) {
+            return -1;
+        }
+        int val = outgoing.front();
+        outgoing.pop();
+        return val;
+    }
+
 private:
     std::queue<uint8_t> incoming;
     std::queue<uint8_t> outgoing;

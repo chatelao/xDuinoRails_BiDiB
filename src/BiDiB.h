@@ -13,6 +13,8 @@ const uint8_t BIDIB_MAX_NODES       = 32;
 const uint8_t MSG_SYS_GET_MAGIC     = 1;
 const uint8_t MSG_SYS_GET_P_VERSION = 2;
 const uint8_t MSG_SYS_GET_UNIQUE_ID = 3;
+const uint8_t MSG_SYS_ENABLE        = 4;
+const uint8_t MSG_SYS_DISABLE       = 5;
 const uint8_t MSG_NODETAB_GETALL    = 6;
 const uint8_t MSG_NODETAB_GETNEXT   = 7;
 const uint8_t MSG_LOGON             = 10;
@@ -90,6 +92,10 @@ public:
     // Processes logon requests
     void logon();
 
+    // Enable and disable system messages
+    void enable();
+    void disable();
+
     // Set a feature value
     void setFeature(uint8_t feature_num, uint8_t value);
 
@@ -103,8 +109,7 @@ public:
 protected:
     BiDiBMessage _lastMessage;
     bool _messageAvailable;
-
-private:
+    bool _system_enabled;
     BiDiBFeature _features[BIDIB_MAX_FEATURES];
     uint8_t _feature_count;
     uint8_t _next_feature_index;
@@ -113,6 +118,7 @@ private:
     uint8_t _node_count;
     bool _isLoggedIn;
 
+private:
     // Empfängt und validiert eine BiDiB-Nachricht
     bool receiveMessage(BiDiBMessage& msg);
 

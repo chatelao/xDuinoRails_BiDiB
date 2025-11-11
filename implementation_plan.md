@@ -39,8 +39,8 @@ Vor jeder neuen Implementierung ist dieses Dokument zu konsultieren. Nach Abschl
 - [x] **2.3. Feature-Management:**
     - [x] Implementierung der Abfrage von Knoteneigenschaften (`MSG_FEATURE_GETALL`, `MSG_FEATURE_GETNEXT`, `MSG_FEATURE_GET` / `MSG_FEATURE_COUNT`, `MSG_FEATURE`, `MSG_FEATURE_NA`).
     - [x] Implementierung zum Setzen von Features (`MSG_FEATURE_SET`).
-- [ ] **2.4. System-Steuerung:**
-    - [ ] Implementierung von `MSG_SYS_ENABLE` und `MSG_SYS_DISABLE` zur Steuerung des Nachrichtenflusses.
+- [x] **2.4. System-Steuerung:**
+    - [x] Implementierung von `MSG_SYS_ENABLE` und `MSG_SYS_DISABLE` zur Steuerung des Nachrichtenflusses.
 
 ---
 
