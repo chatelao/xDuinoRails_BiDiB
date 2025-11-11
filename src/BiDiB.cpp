@@ -33,6 +33,36 @@ BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false) {
 
     node_table_version = 0;
     _node_count = 1; // Start with 1 node (the host itself)
+    _feature_count = 0;
+    _next_feature_index = 0;
+
+    // Initialize default features
+    setFeature(BIDIB_FEATURE_FW_UPDATE_SUPPORT, 1);
+    setFeature(BIDIB_FEATURE_STRING_SIZE, 32);
+    setFeature(BIDIB_FEATURE_MSG_RECEIVE_COUNT, 4);
+}
+
+void BiDiB::setFeature(uint8_t feature_num, uint8_t value) {
+    for (int i = 0; i < _feature_count; ++i) {
+        if (_features[i].feature_num == feature_num) {
+            _features[i].value = value;
+            return;
+        }
+    }
+    if (_feature_count < BIDIB_MAX_FEATURES) {
+        _features[_feature_count].feature_num = feature_num;
+        _features[_feature_count].value = value;
+        _feature_count++;
+    }
+}
+
+uint8_t BiDiB::getFeature(uint8_t feature_num) {
+    for (int i = 0; i < _feature_count; ++i) {
+        if (_features[i].feature_num == feature_num) {
+            return _features[i].value;
+        }
+    }
+    return 0; // Return 0 if feature not found
 }
 
 void BiDiB::logon() {
@@ -155,6 +185,84 @@ void BiDiB::handleMessages() {
         case MSG_LOGON_ACK: {
             _isLoggedIn = true;
             _node_count = 1;
+            break;
+        }
+        case MSG_FEATURE_GETALL: {
+            _next_feature_index = 0; // Reset index for GETNEXT sequence
+            BiDiBMessage response;
+            response.length = 4;
+            response.address[0] = 0;
+            response.msg_num = msg.msg_num;
+            response.msg_type = MSG_FEATURE_COUNT;
+            response.data[0] = _feature_count;
+            sendMessage(response);
+            break;
+        }
+        case MSG_FEATURE_GETNEXT: {
+            if (_next_feature_index < _feature_count) {
+                BiDiBMessage response;
+                response.length = 5;
+                response.address[0] = 0;
+                response.msg_num = msg.msg_num;
+                response.msg_type = MSG_FEATURE;
+                response.data[0] = _features[_next_feature_index].feature_num;
+                response.data[1] = _features[_next_feature_index].value;
+                sendMessage(response);
+                _next_feature_index++;
+            } else {
+                BiDiBMessage response;
+                response.length = 4;
+                response.address[0] = 0;
+                response.msg_num = msg.msg_num;
+                response.msg_type = MSG_FEATURE_NA;
+                response.data[0] = 255; // End of list
+                sendMessage(response);
+                _next_feature_index = 0; // Reset after sequence
+            }
+            break;
+        }
+        case MSG_FEATURE_GET: {
+            uint8_t feature_num = msg.data[0];
+            bool found = false;
+            for (int i = 0; i < _feature_count; ++i) {
+                if (_features[i].feature_num == feature_num) {
+                    BiDiBMessage response;
+                    response.length = 5;
+                    response.address[0] = 0;
+                    response.msg_num = msg.msg_num;
+                    response.msg_type = MSG_FEATURE;
+                    response.data[0] = _features[i].feature_num;
+                    response.data[1] = _features[i].value;
+                    sendMessage(response);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                BiDiBMessage response;
+                response.length = 4;
+                response.address[0] = 0;
+                response.msg_num = msg.msg_num;
+                response.msg_type = MSG_FEATURE_NA;
+                response.data[0] = feature_num;
+                sendMessage(response);
+            }
+            break;
+        }
+        case MSG_FEATURE_SET: {
+            uint8_t feature_num = msg.data[0];
+            uint8_t value = msg.data[1];
+            setFeature(feature_num, value);
+
+            // Respond with the new value
+            BiDiBMessage response;
+            response.length = 5;
+            response.address[0] = 0;
+            response.msg_num = msg.msg_num;
+            response.msg_type = MSG_FEATURE;
+            response.data[0] = feature_num;
+            response.data[1] = getFeature(feature_num);
+            sendMessage(response);
             break;
         }
     }
