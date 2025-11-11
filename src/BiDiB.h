@@ -9,6 +9,7 @@ const uint8_t BIDIB_ESCAPE = 0xFD;
 
 // BiDiB Message Types
 // --- System Messages ---
+const uint8_t BIDIB_MAX_NODES       = 32;
 const uint8_t MSG_SYS_GET_MAGIC     = 1;
 const uint8_t MSG_SYS_GET_P_VERSION = 2;
 const uint8_t MSG_SYS_GET_UNIQUE_ID = 3;
@@ -70,14 +71,18 @@ public:
     // Node properties
     uint8_t unique_id[7];
     uint8_t node_table_version;
-    uint8_t node_count;
 
 private:
-    BiDiBNode local_node;
+    BiDiBNode _local_node;
+    BiDiBNode _node_table[BIDIB_MAX_NODES];
+    uint8_t _node_count;
     bool _isLoggedIn;
 
     // Empfängt und validiert eine BiDiB-Nachricht
     bool receiveMessage(BiDiBMessage& msg);
+
+    // Find a node by unique_id in the node table
+    int findNode(const uint8_t* unique_id);
 
     // Sendet ein einzelnes Byte und wendet bei Bedarf das Escaping an
     void sendByte(uint8_t byte, uint8_t &crc);
