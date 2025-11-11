@@ -5,7 +5,7 @@
 
 int main() {
     BiDiB bidib;
-    uint8_t data[] = {3, 0, 0, 4};
+    uint8_t data[] = {0x04, 0x00, 0x00, 0x48, 0x00};
     std::cout << (int)bidib.calculateCrc(data, sizeof(data)) << std::endl;
     return 0;
 }

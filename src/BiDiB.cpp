@@ -40,6 +40,18 @@ BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false), _system_enabled(t
     setFeature(BIDIB_FEATURE_FW_UPDATE_SUPPORT, 1);
     setFeature(BIDIB_FEATURE_STRING_SIZE, 32);
     setFeature(BIDIB_FEATURE_MSG_RECEIVE_COUNT, 4);
+
+    _track_state = BIDIB_CS_STATE_OFF;
+}
+
+void BiDiB::setTrackState(uint8_t state) {
+    BiDiBMessage msg;
+    msg.length = 4;
+    msg.address[0] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_CS_SET_STATE;
+    msg.data[0] = state;
+    sendMessage(msg);
 }
 
 void BiDiB::setFeature(uint8_t feature_num, uint8_t value) {
@@ -292,6 +304,10 @@ void BiDiB::handleMessages() {
             response.data[0] = feature_num;
             response.data[1] = getFeature(feature_num);
             sendMessage(response);
+            break;
+        }
+        case MSG_CS_STATE: {
+            _track_state = msg.data[0];
             break;
         }
     }
