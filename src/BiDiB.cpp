@@ -21,14 +21,26 @@ static const uint8_t crc8_table[] = {
 };
 
 
-BiDiB::BiDiB() : _messageAvailable(false) {
+BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false) {
     // Initialize unique_id with a placeholder.
     unique_id[0] = 0x80; unique_id[1] = 0x01; unique_id[2] = 0x02;
     unique_id[3] = 0x03; unique_id[4] = 0x04; unique_id[5] = 0x05;
     unique_id[6] = 0x06;
 
+    for (int i=0; i<7; ++i) { local_node.unique_id[i] = unique_id[i]; }
+
     node_table_version = 0;
     node_count = 0;
+}
+
+void BiDiB::logon() {
+    BiDiBMessage msg;
+    msg.length = 11;
+    msg.address[0] = 0;
+    msg.msg_num = 0; // Logon uses 0
+    msg.msg_type = MSG_LOGON;
+    for (int i=0; i<7; ++i) { msg.data[i] = local_node.unique_id[i]; }
+    sendMessage(msg);
 }
 
 void BiDiB::handleMessages() {
@@ -69,24 +81,44 @@ void BiDiB::handleMessages() {
             break;
         }
         case MSG_NODETAB_GETALL: {
-            BiDiBMessage response;
-            response.length = 5;
-            response.address[0] = 0;
-            response.msg_num = msg.msg_num;
-            response.msg_type = MSG_NODETAB_COUNT;
-            response.data[0] = node_table_version;
-            response.data[1] = node_count;
-            sendMessage(response);
+            if (_isLoggedIn) {
+                BiDiBMessage response;
+                response.length = 5;
+                response.address[0] = 0;
+                response.msg_num = msg.msg_num;
+                response.msg_type = MSG_NODETAB_COUNT;
+                response.data[0] = node_table_version;
+                response.data[1] = node_count;
+                sendMessage(response);
+            }
             break;
         }
         case MSG_NODETAB_GETNEXT: {
-            BiDiBMessage response;
-            response.length = 4;
-            response.address[0] = 0;
-            response.msg_num = msg.msg_num;
-            response.msg_type = MSG_NODE_NA;
-            response.data[0] = 0;
-            sendMessage(response);
+            uint8_t requested_node_index = msg.data[0];
+            if (_isLoggedIn && requested_node_index == 0) {
+                BiDiBMessage response;
+                response.length = 12;
+                response.address[0] = 0;
+                response.msg_num = msg.msg_num;
+                response.msg_type = MSG_NODETAB;
+                response.data[0] = node_table_version;
+                response.data[1] = 0; // Node index
+                for(int i=0; i<7; ++i) { response.data[i+2] = local_node.unique_id[i]; }
+                sendMessage(response);
+            } else {
+                BiDiBMessage response;
+                response.length = 4;
+                response.address[0] = 0;
+                response.msg_num = msg.msg_num;
+                response.msg_type = MSG_NODE_NA;
+                response.data[0] = requested_node_index;
+                sendMessage(response);
+            }
+            break;
+        }
+        case MSG_LOGON_ACK: {
+            _isLoggedIn = true;
+            node_count = 1;
             break;
         }
     }

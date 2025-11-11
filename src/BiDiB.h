@@ -14,12 +14,16 @@ const uint8_t MSG_SYS_GET_P_VERSION = 2;
 const uint8_t MSG_SYS_GET_UNIQUE_ID = 3;
 const uint8_t MSG_NODETAB_GETALL    = 6;
 const uint8_t MSG_NODETAB_GETNEXT   = 7;
+const uint8_t MSG_LOGON             = 10;
 const uint8_t MSG_SYS_MAGIC         = 129; // 0x81
 const uint8_t MSG_SYS_P_VERSION     = 130; // 0x82
 const uint8_t MSG_SYS_UNIQUE_ID     = 131; // 0x83
 const uint8_t MSG_NODETAB_COUNT     = 134; // 0x86
 const uint8_t MSG_NODETAB           = 135; // 0x87
 const uint8_t MSG_NODE_NA           = 136; // 0x88
+const uint8_t MSG_NODE_NEW          = 137; // 0x89
+const uint8_t MSG_NODE_LOST         = 138; // 0x8A
+const uint8_t MSG_LOGON_ACK         = 139; // 0x8B
 
 
 // Datenstruktur für eine BiDiB-Nachricht
@@ -29,6 +33,10 @@ struct BiDiBMessage {
     uint8_t msg_num;
     uint8_t msg_type;
     uint8_t data[64]; // Maximale Datenlänge annehmen
+};
+
+struct BiDiBNode {
+    uint8_t unique_id[7];
 };
 
 class BiDiB {
@@ -56,12 +64,18 @@ public:
     // Helper to calculate CRC for testing
     uint8_t calculateCrc(const uint8_t* data, size_t size);
 
+    // Processes logon requests
+    void logon();
+
     // Node properties
     uint8_t unique_id[7];
     uint8_t node_table_version;
     uint8_t node_count;
 
 private:
+    BiDiBNode local_node;
+    bool _isLoggedIn;
+
     // Empfängt und validiert eine BiDiB-Nachricht
     bool receiveMessage(BiDiBMessage& msg);
 
