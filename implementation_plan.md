@@ -32,10 +32,10 @@ Vor jeder neuen Implementierung ist dieses Dokument zu konsultieren. Nach Abschl
         - [x] `MSG_SYS_GET_MAGIC` / `MSG_SYS_MAGIC`
         - [x] `MSG_SYS_GET_P_VERSION` / `MSG_SYS_P_VERSION`
         - [x] `MSG_SYS_GET_UNIQUE_ID` / `MSG_SYS_UNIQUE_ID`
-- [ ] **2.2. Knoten-Management:**
-    - [ ] Implementierung der Logon-Sequenz.
-    - [ ] Verwaltung der Knotentabelle (`MSG_NODETAB_GETALL`, `MSG_NODETAB_GETNEXT` / `MSG_NODETAB_COUNT`, `MSG_NODETAB`).
-    - [ ] Handling von neuen und verlorenen Knoten (`MSG_NODE_NEW`, `MSG_NODE_LOST`).
+- [x] **2.2. Knoten-Management:**
+    - [x] Implementierung der Logon-Sequenz.
+    - [x] Verwaltung der Knotentabelle (`MSG_NODETAB_GETALL`, `MSG_NODETAB_GETNEXT` / `MSG_NODETAB_COUNT`, `MSG_NODETAB`).
+    - [x] Handling von neuen und verlorenen Knoten (`MSG_NODE_NEW`, `MSG_NODE_LOST`).
 - [ ] **2.3. Feature-Management:**
     - [ ] Implementierung der Abfrage von Knoteneigenschaften (`MSG_FEATURE_GETALL`, `MSG_FEATURE_GETNEXT`, `MSG_FEATURE_GET` / `MSG_FEATURE_COUNT`, `MSG_FEATURE`, `MSG_FEATURE_NA`).
     - [ ] Implementierung zum Setzen von Features (`MSG_FEATURE_SET`).

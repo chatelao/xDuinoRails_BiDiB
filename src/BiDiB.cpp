@@ -1,4 +1,5 @@
 #include "BiDiB.h"
+#include <string.h>
 
 // CRC8-Prüfsummentabelle für das Polynom 0x31 (Maxim/Dallas)
 static const uint8_t crc8_table[] = {
@@ -27,10 +28,11 @@ BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false) {
     unique_id[3] = 0x03; unique_id[4] = 0x04; unique_id[5] = 0x05;
     unique_id[6] = 0x06;
 
-    for (int i=0; i<7; ++i) { local_node.unique_id[i] = unique_id[i]; }
+    for (int i=0; i<7; ++i) { _local_node.unique_id[i] = unique_id[i]; }
+    _node_table[0] = _local_node; // The host itself is always node 0
 
     node_table_version = 0;
-    node_count = 0;
+    _node_count = 1; // Start with 1 node (the host itself)
 }
 
 void BiDiB::logon() {
@@ -39,7 +41,7 @@ void BiDiB::logon() {
     msg.address[0] = 0;
     msg.msg_num = 0; // Logon uses 0
     msg.msg_type = MSG_LOGON;
-    for (int i=0; i<7; ++i) { msg.data[i] = local_node.unique_id[i]; }
+    for (int i=0; i<7; ++i) { msg.data[i] = _local_node.unique_id[i]; }
     sendMessage(msg);
 }
 
@@ -88,22 +90,22 @@ void BiDiB::handleMessages() {
                 response.msg_num = msg.msg_num;
                 response.msg_type = MSG_NODETAB_COUNT;
                 response.data[0] = node_table_version;
-                response.data[1] = node_count;
+                response.data[1] = _node_count;
                 sendMessage(response);
             }
             break;
         }
         case MSG_NODETAB_GETNEXT: {
             uint8_t requested_node_index = msg.data[0];
-            if (_isLoggedIn && requested_node_index == 0) {
+            if (_isLoggedIn && requested_node_index < _node_count) {
                 BiDiBMessage response;
                 response.length = 12;
                 response.address[0] = 0;
                 response.msg_num = msg.msg_num;
                 response.msg_type = MSG_NODETAB;
                 response.data[0] = node_table_version;
-                response.data[1] = 0; // Node index
-                for(int i=0; i<7; ++i) { response.data[i+2] = local_node.unique_id[i]; }
+                response.data[1] = requested_node_index;
+                for(int i=0; i<7; ++i) { response.data[i+2] = _node_table[requested_node_index].unique_id[i]; }
                 sendMessage(response);
             } else {
                 BiDiBMessage response;
@@ -116,12 +118,55 @@ void BiDiB::handleMessages() {
             }
             break;
         }
+        case MSG_LOGON: {
+            if (findNode(msg.data) != -1) { break; } // Node already logged on.
+            if (_node_count >= BIDIB_MAX_NODES) { break; } // Node table full.
+
+            // 1. Add node to table
+            BiDiBNode newNode;
+            for(int i=0; i<7; ++i) { newNode.unique_id[i] = msg.data[i]; }
+            _node_table[_node_count] = newNode;
+
+            // 2. Send LOGON_ACK to the new node
+            BiDiBMessage ack;
+            ack.length = 12;
+            ack.address[0] = 0;
+            ack.msg_num = msg.msg_num;
+            ack.msg_type = MSG_LOGON_ACK;
+            ack.data[0] = node_table_version;
+            ack.data[1] = _node_count; // The new node's address
+            for(int i=0; i<7; ++i) { ack.data[i+2] = msg.data[i]; }
+            sendMessage(ack);
+
+            // 3. Send NODE_NEW to all other nodes (broadcast)
+            BiDiBMessage nodeNew;
+            nodeNew.length = 12;
+            nodeNew.address[0] = 0; // Broadcast
+            nodeNew.msg_num = 0; // System message
+            nodeNew.msg_type = MSG_NODE_NEW;
+            nodeNew.data[0] = node_table_version;
+            nodeNew.data[1] = _node_count; // The new node's address
+            for(int i=0; i<7; ++i) { nodeNew.data[i+2] = msg.data[i]; }
+            sendMessage(nodeNew);
+
+            _node_count++;
+            break;
+        }
         case MSG_LOGON_ACK: {
             _isLoggedIn = true;
-            node_count = 1;
+            _node_count = 1;
             break;
         }
     }
+}
+
+int BiDiB::findNode(const uint8_t* unique_id) {
+    for (int i = 0; i < _node_count; ++i) {
+        if (memcmp(_node_table[i].unique_id, unique_id, 7) == 0) {
+            return i; // Node found
+        }
+    }
+    return -1; // Node not found
 }
 
 uint8_t BiDiB::calculateCrc(const uint8_t* data, size_t size) {
