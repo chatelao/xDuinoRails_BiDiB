@@ -8,6 +8,10 @@ Before starting any implementation work related to the BiDiB Arduino library, yo
 
 After completing a development phase or a significant feature, you **must** update the `implementation_plan.md` to reflect the current status of the project.
 
+## Entwicklungsprozess
+
+Vor jeder Umsetzung ist das `implementation_plan.md` zu lesen. Nach der Umsetzung ist dasselbe Dokument nachzuführen.
+
 ## Project Structure and CI/CD
 
 - **Arduino Library:** This project is planned as an Arduino library. The code should be structured accordingly (e.g., using a `src` directory for source files).
