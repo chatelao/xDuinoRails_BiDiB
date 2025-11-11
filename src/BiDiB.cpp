@@ -22,7 +22,7 @@ static const uint8_t crc8_table[] = {
 };
 
 
-BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false) {
+BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false), _system_enabled(true) {
     // Initialize unique_id with a placeholder.
     unique_id[0] = 0x80; unique_id[1] = 0x01; unique_id[2] = 0x02;
     unique_id[3] = 0x03; unique_id[4] = 0x04; unique_id[5] = 0x05;
@@ -75,10 +75,39 @@ void BiDiB::logon() {
     sendMessage(msg);
 }
 
+void BiDiB::enable() {
+    BiDiBMessage msg;
+    msg.length = 3;
+    msg.address[0] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_SYS_ENABLE;
+    sendMessage(msg);
+}
+
+void BiDiB::disable() {
+    BiDiBMessage msg;
+    msg.length = 3;
+    msg.address[0] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_SYS_DISABLE;
+    sendMessage(msg);
+}
+
 void BiDiB::handleMessages() {
     if (!messageAvailable()) { return; }
 
     BiDiBMessage msg = getLastMessage();
+
+    // Handle system enable/disable messages regardless of the current state
+    if (msg.msg_type == MSG_SYS_ENABLE) {
+        _system_enabled = true;
+        return;
+    } else if (msg.msg_type == MSG_SYS_DISABLE) {
+        _system_enabled = false;
+        return;
+    }
+
+    if (!_system_enabled) { return; }
 
     switch (msg.msg_type) {
         case MSG_SYS_GET_MAGIC: {
