@@ -47,14 +47,22 @@ const uint8_t MSG_FEATURE_NA = 0x8E;
 const uint8_t MSG_CS_SET_STATE = 0x48;
 const uint8_t MSG_CS_DRIVE = 0x40;
 const uint8_t MSG_CS_ACCESSORY = 0x42;
+const uint8_t MSG_CS_POM = 0x44;
 const uint8_t MSG_CS_DRIVE_ACK = 0xE0;
 const uint8_t MSG_CS_ACCESSORY_ACK = 0xE2;
+const uint8_t MSG_CS_POM_ACK = 0xE4;
 const uint8_t MSG_CS_STATE = 0xE9;
 
 // --- Command Station Constants ---
 const uint8_t BIDIB_CS_STATE_OFF = 0;  ///< Track voltage is off
 const uint8_t BIDIB_CS_STATE_STOP = 1; ///< Track voltage is on, but zero speed commands are sent
 const uint8_t BIDIB_CS_STATE_GO = 2;   ///< Track voltage is on, normal operation
+
+// --- POM Opcodes ---
+const uint8_t BIDIB_CS_POM_RD_BLOCK = 0x00;
+const uint8_t BIDIB_CS_POM_RD_BYTE = 0x01;
+const uint8_t BIDIB_CS_POM_WR_BIT = 0x02;
+const uint8_t BIDIB_CS_POM_WR_BYTE = 0x03;
 
 //================================================================================
 // BiDiB Data Structures
@@ -99,6 +107,11 @@ typedef void (*DriveAckCallback)(uint16_t address, uint8_t status);
 /// @param address The DCC address of the accessory.
 /// @param status The acknowledgement status.
 typedef void (*AccessoryAckCallback)(uint16_t address, uint8_t status);
+
+/// @brief Callback function type for PoM acknowledgements.
+/// @param address The DCC address of the decoder.
+/// @param status The acknowledgement status.
+typedef void (*PomAckCallback)(uint16_t address, uint8_t status);
 
 //================================================================================
 // BiDiB Class Definition
@@ -192,6 +205,16 @@ public:
     /// @param callback The function to be called.
     void onAccessoryAck(AccessoryAckCallback callback);
 
+    /// @brief Writes a single byte to a CV on the main track (PoM).
+    /// @param address The DCC address of the decoder.
+    /// @param cv The CV number to write to (1-1024).
+    /// @param value The byte value to write.
+    void pomWriteByte(uint16_t address, uint16_t cv, uint8_t value);
+
+    /// @brief Registers a callback function to be called when a PoM acknowledgement is received.
+    /// @param callback The function to be called.
+    void onPomAck(PomAckCallback callback);
+
     // --- Node Properties ---
     uint8_t unique_id[7];       ///< The unique ID of this node.
     uint8_t node_table_version; ///< The version of the node table.
@@ -210,6 +233,7 @@ protected:
     uint8_t _track_state;
     DriveAckCallback _driveAckCallback;
     AccessoryAckCallback _accessoryAckCallback;
+    PomAckCallback _pomAckCallback;
 
 private:
     /// @brief Receives and validates an incoming BiDiB message from the serial stream.
