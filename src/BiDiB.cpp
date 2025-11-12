@@ -47,6 +47,7 @@ BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false), _system_enabled(t
     _track_state = BIDIB_CS_STATE_OFF;
     _driveAckCallback = nullptr;
     _accessoryAckCallback = nullptr;
+    _pomAckCallback = nullptr;
 }
 
 // =============================================================================
@@ -86,6 +87,29 @@ void BiDiB::accessory(uint16_t address, uint8_t output, uint8_t state) {
 
 void BiDiB::onAccessoryAck(AccessoryAckCallback callback) {
     _accessoryAckCallback = callback;
+}
+
+void BiDiB::pomWriteByte(uint16_t address, uint16_t cv, uint8_t value) {
+    BiDiBMessage msg;
+    msg.length = 15;
+    msg.address[0] = 0; // Broadcast to command station
+    msg.msg_num = 0;
+    msg.msg_type = MSG_CS_POM;
+    msg.data[0] = address & 0xFF;
+    msg.data[1] = (address >> 8) & 0xFF;
+    msg.data[2] = 0; // ADDR_XL
+    msg.data[3] = 0; // ADDR_XH
+    msg.data[4] = 0; // MID
+    msg.data[5] = BIDIB_CS_POM_WR_BYTE; // OPCODE
+    msg.data[6] = (cv - 1) & 0xFF; // CV_L
+    msg.data[7] = ((cv - 1) >> 8) & 0xFF; // CV_H
+    msg.data[8] = 0; // CV_X
+    msg.data[9] = value;
+    sendMessage(msg);
+}
+
+void BiDiB::onPomAck(PomAckCallback callback) {
+    _pomAckCallback = callback;
 }
 
 void BiDiB::setTrackState(uint8_t state) {
@@ -395,6 +419,14 @@ void BiDiB::handleMessages() {
                 uint16_t address = msg.data[0] | (msg.data[1] << 8);
                 uint8_t status = msg.data[2];
                 _accessoryAckCallback(address, status);
+            }
+            break;
+        }
+        case MSG_CS_POM_ACK: {
+            if (_pomAckCallback != nullptr) {
+                uint16_t address = msg.data[0] | (msg.data[1] << 8);
+                uint8_t status = msg.data[5];
+                _pomAckCallback(address, status);
             }
             break;
         }

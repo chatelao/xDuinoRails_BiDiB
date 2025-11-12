@@ -67,8 +67,8 @@ Vor jeder neuen Implementierung ist dieses Dokument zu konsultieren. Nach Abschl
 - [x] **3.3. DCC-Zubehör:**
     - [x] Implementierung von `MSG_CS_ACCESSORY` zur Steuerung von Weichen und Signalen über das Gleissignal.
     - [x] Handling von `MSG_CS_ACCESSORY_ACK`-Quittungen.
-- [ ] **3.4. Programmierung:**
-    - [ ] Implementierung von PoM (`MSG_CS_POM` / `MSG_CS_POM_ACK`).
+    - [x] **3.4. Programmierung:**
+    - [x] Implementierung von PoM (`MSG_CS_POM` / `MSG_CS_POM_ACK`).
 
 ---
 
