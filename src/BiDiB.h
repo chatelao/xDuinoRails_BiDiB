@@ -3,122 +3,172 @@
 
 #include <Arduino.h>
 
-// BiDiB-Protokoll-Konstanten
-const uint8_t BIDIB_MAGIC = 0xFE;
-const uint8_t BIDIB_ESCAPE = 0xFD;
+//================================================================================
+// BiDiB Protocol Constants
+//================================================================================
 
+const uint8_t BIDIB_MAGIC = 0xFE;  ///< Start and end of a BiDiB message
+const uint8_t BIDIB_ESCAPE = 0xFD; ///< Escape character for MAGIC byte
+
+//================================================================================
 // BiDiB Message Types
+//================================================================================
+
 // --- System Messages ---
-const uint8_t BIDIB_MAX_NODES       = 32;
-const uint8_t MSG_SYS_GET_MAGIC     = 1;
+const uint8_t BIDIB_MAX_NODES = 32;
+const uint8_t MSG_SYS_GET_MAGIC = 1;
 const uint8_t MSG_SYS_GET_P_VERSION = 2;
 const uint8_t MSG_SYS_GET_UNIQUE_ID = 3;
-const uint8_t MSG_SYS_ENABLE        = 4;
-const uint8_t MSG_SYS_DISABLE       = 5;
-const uint8_t MSG_NODETAB_GETALL    = 6;
-const uint8_t MSG_NODETAB_GETNEXT   = 7;
-const uint8_t MSG_LOGON             = 10;
-const uint8_t MSG_SYS_MAGIC         = 129; // 0x81
-const uint8_t MSG_SYS_P_VERSION     = 130; // 0x82
-const uint8_t MSG_SYS_UNIQUE_ID     = 131; // 0x83
-const uint8_t MSG_NODETAB_COUNT     = 134; // 0x86
-const uint8_t MSG_NODETAB           = 135; // 0x87
-const uint8_t MSG_NODE_NA           = 136; // 0x88
-const uint8_t MSG_NODE_NEW          = 137; // 0x89
-const uint8_t MSG_NODE_LOST         = 138; // 0x8A
-const uint8_t MSG_LOGON_ACK         = 139; // 0x8B
+const uint8_t MSG_SYS_ENABLE = 4;
+const uint8_t MSG_SYS_DISABLE = 5;
+const uint8_t MSG_NODETAB_GETALL = 6;
+const uint8_t MSG_NODETAB_GETNEXT = 7;
+const uint8_t MSG_LOGON = 10;
+const uint8_t MSG_SYS_MAGIC = 0x81;
+const uint8_t MSG_SYS_P_VERSION = 0x82;
+const uint8_t MSG_SYS_UNIQUE_ID = 0x83;
+const uint8_t MSG_NODETAB_COUNT = 0x86;
+const uint8_t MSG_NODETAB = 0x87;
+const uint8_t MSG_NODE_NA = 0x88;
+const uint8_t MSG_NODE_NEW = 0x89;
+const uint8_t MSG_NODE_LOST = 0x8A;
+const uint8_t MSG_LOGON_ACK = 0x8B;
 
 // --- Feature Messages ---
-const uint8_t MSG_FEATURE_GETALL    = 11;
-const uint8_t MSG_FEATURE_GETNEXT   = 12;
-const uint8_t MSG_FEATURE_GET       = 13;
-const uint8_t MSG_FEATURE_SET       = 14;
-const uint8_t MSG_FEATURE_COUNT     = 140; // 0x8C
-const uint8_t MSG_FEATURE           = 141; // 0x8D
-const uint8_t MSG_FEATURE_NA        = 142; // 0x8E
+const uint8_t MSG_FEATURE_GETALL = 11;
+const uint8_t MSG_FEATURE_GETNEXT = 12;
+const uint8_t MSG_FEATURE_GET = 13;
+const uint8_t MSG_FEATURE_SET = 14;
+const uint8_t MSG_FEATURE_COUNT = 0x8C;
+const uint8_t MSG_FEATURE = 0x8D;
+const uint8_t MSG_FEATURE_NA = 0x8E;
 
 // --- Command Station Messages ---
-const uint8_t MSG_CS_SET_STATE      = 0x48;
-const uint8_t MSG_CS_DRIVE          = 0x40;
-const uint8_t MSG_CS_DRIVE_ACK      = 0xE0;
-const uint8_t MSG_CS_STATE          = 0xE9; // 0x89
+const uint8_t MSG_CS_SET_STATE = 0x48;
+const uint8_t MSG_CS_DRIVE = 0x40;
+const uint8_t MSG_CS_DRIVE_ACK = 0xE0;
+const uint8_t MSG_CS_STATE = 0xE9;
 
 // --- Command Station Constants ---
-const uint8_t BIDIB_CS_STATE_OFF    = 0;
-const uint8_t BIDIB_CS_STATE_STOP   = 1;
-const uint8_t BIDIB_CS_STATE_GO     = 2;
+const uint8_t BIDIB_CS_STATE_OFF = 0;  ///< Track voltage is off
+const uint8_t BIDIB_CS_STATE_STOP = 1; ///< Track voltage is on, but zero speed commands are sent
+const uint8_t BIDIB_CS_STATE_GO = 2;   ///< Track voltage is on, normal operation
 
-// Datenstruktur für eine BiDiB-Nachricht
-struct BiDiBMessage {
+//================================================================================
+// BiDiB Data Structures
+//================================================================================
+
+/// @brief Structure representing a BiDiB message.
+struct BiDiBMessage
+{
     uint8_t length;
     uint8_t address[4];
     uint8_t msg_num;
     uint8_t msg_type;
-    uint8_t data[64]; // Maximale Datenlänge annehmen
+    uint8_t data[64]; // Assuming a maximum data length
 };
 
-const uint8_t BIDIB_MAX_FEATURES    = 16;
+const uint8_t BIDIB_MAX_FEATURES = 16;
 
 // --- Feature Constants ---
-const uint8_t BIDIB_FEATURE_FW_UPDATE_SUPPORT = 0; // 1 = supported
-const uint8_t BIDIB_FEATURE_STRING_SIZE       = 1; // max size of strings
-const uint8_t BIDIB_FEATURE_MSG_RECEIVE_COUNT = 2; // how many msgs can be received
+const uint8_t BIDIB_FEATURE_FW_UPDATE_SUPPORT = 0; ///< 1 if firmware update is supported
+const uint8_t BIDIB_FEATURE_STRING_SIZE = 1;       ///< Maximum size of strings
+const uint8_t BIDIB_FEATURE_MSG_RECEIVE_COUNT = 2; ///< How many messages can be received at once
 
-
-struct BiDiBNode {
+/// @brief Structure representing a node on the BiDiB bus.
+struct BiDiBNode
+{
     uint8_t unique_id[7];
 };
 
-struct BiDiBFeature {
+/// @brief Structure representing a feature of a BiDiB node.
+struct BiDiBFeature
+{
     uint8_t feature_num;
     uint8_t value;
 };
 
-class BiDiB {
+//================================================================================
+// BiDiB Class Definition
+//================================================================================
+
+class BiDiB
+{
 public:
     BiDiB();
 
-    // Initialisiert die BiDiB-Instanz mit einem seriellen Port
+    // --- Core Functions ---
+
+    /// @brief Initializes the BiDiB instance with a serial port.
+    /// @param serial The Arduino Stream object to use for communication (e.g., Serial, Serial1).
     void begin(Stream &serial);
 
-    // Verarbeitet eingehende Daten und muss regelmäßig aufgerufen werden
+    /// @brief Processes incoming data from the serial port. This must be called regularly in the main loop.
     void update();
 
-    // Verarbeitet die letzte empfangene Nachricht
+    /// @brief Handles the last fully received message.
     void handleMessages();
 
-    // Sendet eine vollständige, formatierte BiDiB-Nachricht
-    virtual void sendMessage(const BiDiBMessage& msg);
+    /// @brief Sends a complete, formatted BiDiB message.
+    /// @param msg The BiDiBMessage object to send.
+    virtual void sendMessage(const BiDiBMessage &msg);
 
-    // Returns true if a message has been received and is waiting to be processed
+    /// @brief Checks if a message has been received and is waiting to be processed.
+    /// @return True if a message is available, false otherwise.
     bool messageAvailable();
 
-    // Returns the last received message
+    /// @brief Gets the last received message.
+    /// @return The last BiDiBMessage object received.
     BiDiBMessage getLastMessage();
 
-    // Helper to calculate CRC for testing
-    uint8_t calculateCrc(const uint8_t* data, size_t size);
+    /// @brief Helper function to calculate the CRC8 checksum for a data block.
+    /// @param data Pointer to the data array.
+    /// @param size The size of the data array.
+    /// @return The calculated CRC8 checksum.
+    uint8_t calculateCrc(const uint8_t *data, size_t size);
 
-    // Processes logon requests
+    // --- System-Level Functions ---
+
+    /// @brief Initiates the logon sequence to connect to the BiDiB master.
     void logon();
 
-    // Enable and disable system messages
+    /// @brief Enables the BiDiB node, allowing it to send and receive messages.
     void enable();
+
+    /// @brief Disables the BiDiB node.
     void disable();
 
-    // Set a feature value
+    /// @brief Checks if the node is currently logged in and enabled.
+    /// @return True if the node is logged in, false otherwise.
+    bool isLoggedIn();
+
+    // --- Feature Management ---
+
+    /// @brief Sets the value of a feature for this node.
+    /// @param feature_num The feature number to set.
+    /// @param value The value to set for the feature.
     void setFeature(uint8_t feature_num, uint8_t value);
 
-    // Get a feature value
+    /// @brief Gets the current value of a feature for this node.
+    /// @param feature_num The feature number to get.
+    /// @return The value of the feature.
     uint8_t getFeature(uint8_t feature_num);
 
-    // Command Station functions
+    // --- Command Station Functions ---
+
+    /// @brief Sets the state of the DCC track power.
+    /// @param state The desired track state (BIDIB_CS_STATE_OFF, BIDIB_CS_STATE_STOP, BIDIB_CS_STATE_GO).
     void setTrackState(uint8_t state);
+
+    /// @brief Sends a drive command to a locomotive.
+    /// @param address The DCC address of the locomotive.
+    /// @param speed The speed of the locomotive (-127 to 127).
+    /// @param functions A bitmask representing the active functions (F0-F7).
     void drive(uint16_t address, int8_t speed, uint8_t functions);
 
-    // Node properties
-    uint8_t unique_id[7];
-    uint8_t node_table_version;
+    // --- Node Properties ---
+    uint8_t unique_id[7];       ///< The unique ID of this node.
+    uint8_t node_table_version; ///< The version of the node table.
 
 protected:
     BiDiBMessage _lastMessage;
@@ -134,19 +184,27 @@ protected:
     uint8_t _track_state;
 
 private:
-    // Empfängt und validiert eine BiDiB-Nachricht
-    bool receiveMessage(BiDiBMessage& msg);
+    /// @brief Receives and validates an incoming BiDiB message from the serial stream.
+    /// @param msg A reference to a BiDiBMessage object to store the received message.
+    /// @return True if a complete and valid message was received, false otherwise.
+    bool receiveMessage(BiDiBMessage &msg);
 
-    // Find a node by unique_id in the node table
-    int findNode(const uint8_t* unique_id);
+    /// @brief Finds a node in the internal node table by its unique ID.
+    /// @param unique_id A pointer to the 7-byte unique ID of the node to find.
+    /// @return The index of the node in the table, or -1 if not found.
+    int findNode(const uint8_t *unique_id);
 
-    // Sendet ein einzelnes Byte und wendet bei Bedarf das Escaping an
+    /// @brief Sends a single byte and applies escaping if necessary.
+    /// @param byte The byte to send.
+    /// @param crc A reference to the running CRC checksum, which will be updated.
     void sendByte(uint8_t byte, uint8_t &crc);
 
-    // Hilfsmethode zur Aktualisierung der CRC-Prüfsumme
+    /// @brief Updates the CRC checksum with a new byte.
+    /// @param byte The byte to add to the CRC calculation.
+    /// @param crc A reference to the CRC checksum to update.
     void updateCrc(uint8_t byte, uint8_t &crc);
 
-    Stream* bidib_serial;
+    Stream *bidib_serial;
     uint8_t protocol_version[2] = {0, 1}; // V 0.1
 };
 

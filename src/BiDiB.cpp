@@ -1,7 +1,7 @@
 #include "BiDiB.h"
 #include <string.h>
 
-// CRC8-Prüfsummentabelle für das Polynom 0x31 (Maxim/Dallas)
+// CRC8 lookup table for the polynomial 0x31 (Maxim/Dallas)
 static const uint8_t crc8_table[] = {
     0, 94, 188, 226, 97, 63, 221, 131, 194, 156, 126, 32, 163, 253, 31, 65,
     157, 195, 33, 127, 252, 162, 64, 30, 95, 1, 227, 189, 62, 96, 130, 220,
@@ -21,22 +21,25 @@ static const uint8_t crc8_table[] = {
     52, 106, 136, 214, 246, 168, 74, 20, 85, 11, 233, 183, 151, 201, 43, 117
 };
 
-
 BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false), _system_enabled(true) {
-    // Initialize unique_id with a placeholder.
+    // Initialize unique_id with a default placeholder value.
+    // IMPORTANT: The user should set a truly unique ID in their setup() function.
     unique_id[0] = 0x80; unique_id[1] = 0x01; unique_id[2] = 0x02;
     unique_id[3] = 0x03; unique_id[4] = 0x04; unique_id[5] = 0x05;
     unique_id[6] = 0x06;
 
+    // Copy the unique ID to the local node representation.
     for (int i=0; i<7; ++i) { _local_node.unique_id[i] = unique_id[i]; }
-    _node_table[0] = _local_node; // The host itself is always node 0
+
+    // The host itself is always considered the first node in the table.
+    _node_table[0] = _local_node;
 
     node_table_version = 0;
     _node_count = 1; // Start with 1 node (the host itself)
     _feature_count = 0;
     _next_feature_index = 0;
 
-    // Initialize default features
+    // Initialize default features as per BiDiB specification.
     setFeature(BIDIB_FEATURE_FW_UPDATE_SUPPORT, 1);
     setFeature(BIDIB_FEATURE_STRING_SIZE, 32);
     setFeature(BIDIB_FEATURE_MSG_RECEIVE_COUNT, 4);
@@ -44,15 +47,19 @@ BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false), _system_enabled(t
     _track_state = BIDIB_CS_STATE_OFF;
 }
 
+// =============================================================================
+// Command Station Functions
+// =============================================================================
+
 void BiDiB::drive(uint16_t address, int8_t speed, uint8_t functions) {
     BiDiBMessage msg;
     msg.length = 8;
-    msg.address[0] = 0;
+    msg.address[0] = 0; // Broadcast to command station
     msg.msg_num = 0;
     msg.msg_type = MSG_CS_DRIVE;
     msg.data[0] = address & 0xFF;
     msg.data[1] = (address >> 8) & 0xFF;
-    msg.data[2] = 2; // DCC128 format
+    msg.data[2] = 2; // Speed format: DCC128
     msg.data[3] = speed;
     msg.data[4] = functions;
     sendMessage(msg);
@@ -61,20 +68,26 @@ void BiDiB::drive(uint16_t address, int8_t speed, uint8_t functions) {
 void BiDiB::setTrackState(uint8_t state) {
     BiDiBMessage msg;
     msg.length = 4;
-    msg.address[0] = 0;
+    msg.address[0] = 0; // Broadcast to command station
     msg.msg_num = 0;
     msg.msg_type = MSG_CS_SET_STATE;
     msg.data[0] = state;
     sendMessage(msg);
 }
 
+// =============================================================================
+// Feature Management
+// =============================================================================
+
 void BiDiB::setFeature(uint8_t feature_num, uint8_t value) {
+    // First, check if the feature already exists and update it.
     for (int i = 0; i < _feature_count; ++i) {
         if (_features[i].feature_num == feature_num) {
             _features[i].value = value;
             return;
         }
     }
+    // If not, add it as a new feature if there's space.
     if (_feature_count < BIDIB_MAX_FEATURES) {
         _features[_feature_count].feature_num = feature_num;
         _features[_feature_count].value = value;
@@ -88,16 +101,20 @@ uint8_t BiDiB::getFeature(uint8_t feature_num) {
             return _features[i].value;
         }
     }
-    return 0; // Return 0 if feature not found
+    return 0; // Return 0 if the feature is not found.
 }
+
+// =============================================================================
+// System-Level Functions
+// =============================================================================
 
 void BiDiB::logon() {
     BiDiBMessage msg;
     msg.length = 11;
     msg.address[0] = 0;
-    msg.msg_num = 0; // Logon uses 0
+    msg.msg_num = 0; // Logon always uses message number 0
     msg.msg_type = MSG_LOGON;
-    for (int i=0; i<7; ++i) { msg.data[i] = _local_node.unique_id[i]; }
+    memcpy(msg.data, _local_node.unique_id, 7);
     sendMessage(msg);
 }
 
@@ -119,12 +136,20 @@ void BiDiB::disable() {
     sendMessage(msg);
 }
 
+bool BiDiB::isLoggedIn() {
+    return _isLoggedIn;
+}
+
+// =============================================================================
+// Message Handling
+// =============================================================================
+
 void BiDiB::handleMessages() {
     if (!messageAvailable()) { return; }
 
     BiDiBMessage msg = getLastMessage();
 
-    // Handle system enable/disable messages regardless of the current state
+    // Handle system enable/disable immediately, regardless of the current state.
     if (msg.msg_type == MSG_SYS_ENABLE) {
         _system_enabled = true;
         return;
@@ -133,16 +158,18 @@ void BiDiB::handleMessages() {
         return;
     }
 
+    // If the system is disabled, ignore all other messages.
     if (!_system_enabled) { return; }
 
     switch (msg.msg_type) {
+        // --- Basic System Information ---
         case MSG_SYS_GET_MAGIC: {
             BiDiBMessage response;
             response.length = 4;
             response.address[0] = 0;
             response.msg_num = msg.msg_num;
             response.msg_type = MSG_SYS_MAGIC;
-            response.data[0] = 0xAF;
+            response.data[0] = 0xAF; // BiDiB magic value
             sendMessage(response);
             break;
         }
@@ -152,8 +179,8 @@ void BiDiB::handleMessages() {
             response.address[0] = 0;
             response.msg_num = msg.msg_num;
             response.msg_type = MSG_SYS_P_VERSION;
-            response.data[0] = protocol_version[1];
-            response.data[1] = protocol_version[0];
+            response.data[0] = protocol_version[1]; // Minor version
+            response.data[1] = protocol_version[0]; // Major version
             sendMessage(response);
             break;
         }
@@ -163,10 +190,12 @@ void BiDiB::handleMessages() {
             response.address[0] = 0;
             response.msg_num = msg.msg_num;
             response.msg_type = MSG_SYS_UNIQUE_ID;
-            for(int i=0; i<7; ++i) { response.data[i] = unique_id[i]; }
+            memcpy(response.data, unique_id, 7);
             sendMessage(response);
             break;
         }
+
+        // --- Node and Logon Management ---
         case MSG_NODETAB_GETALL: {
             if (_isLoggedIn) {
                 BiDiBMessage response;
@@ -190,9 +219,10 @@ void BiDiB::handleMessages() {
                 response.msg_type = MSG_NODETAB;
                 response.data[0] = node_table_version;
                 response.data[1] = requested_node_index;
-                for(int i=0; i<7; ++i) { response.data[i+2] = _node_table[requested_node_index].unique_id[i]; }
+                memcpy(response.data + 2, _node_table[requested_node_index].unique_id, 7);
                 sendMessage(response);
             } else {
+                // Node index is out of bounds
                 BiDiBMessage response;
                 response.length = 4;
                 response.address[0] = 0;
@@ -204,15 +234,15 @@ void BiDiB::handleMessages() {
             break;
         }
         case MSG_LOGON: {
-            if (findNode(msg.data) != -1) { break; } // Node already logged on.
-            if (_node_count >= BIDIB_MAX_NODES) { break; } // Node table full.
+            if (findNode(msg.data) != -1) { break; } // Ignore if node is already logged on.
+            if (_node_count >= BIDIB_MAX_NODES) { break; } // Ignore if the node table is full.
 
-            // 1. Add node to table
+            // 1. Add the new node to the local table.
             BiDiBNode newNode;
-            for(int i=0; i<7; ++i) { newNode.unique_id[i] = msg.data[i]; }
+            memcpy(newNode.unique_id, msg.data, 7);
             _node_table[_node_count] = newNode;
 
-            // 2. Send LOGON_ACK to the new node
+            // 2. Send LOGON_ACK back to the new node.
             BiDiBMessage ack;
             ack.length = 12;
             ack.address[0] = 0;
@@ -220,18 +250,18 @@ void BiDiB::handleMessages() {
             ack.msg_type = MSG_LOGON_ACK;
             ack.data[0] = node_table_version;
             ack.data[1] = _node_count; // The new node's address
-            for(int i=0; i<7; ++i) { ack.data[i+2] = msg.data[i]; }
+            memcpy(ack.data + 2, msg.data, 7);
             sendMessage(ack);
 
-            // 3. Send NODE_NEW to all other nodes (broadcast)
+            // 3. Announce the new node to all other nodes (broadcast).
             BiDiBMessage nodeNew;
             nodeNew.length = 12;
-            nodeNew.address[0] = 0; // Broadcast
-            nodeNew.msg_num = 0; // System message
+            nodeNew.address[0] = 0; // Broadcast address
+            nodeNew.msg_num = 0;    // System message
             nodeNew.msg_type = MSG_NODE_NEW;
             nodeNew.data[0] = node_table_version;
             nodeNew.data[1] = _node_count; // The new node's address
-            for(int i=0; i<7; ++i) { nodeNew.data[i+2] = msg.data[i]; }
+            memcpy(nodeNew.data + 2, msg.data, 7);
             sendMessage(nodeNew);
 
             _node_count++;
@@ -239,11 +269,13 @@ void BiDiB::handleMessages() {
         }
         case MSG_LOGON_ACK: {
             _isLoggedIn = true;
-            _node_count = 1;
+            _node_count = 1; // Reset local node count, will be updated by NODETAB messages.
             break;
         }
+
+        // --- Feature Handling ---
         case MSG_FEATURE_GETALL: {
-            _next_feature_index = 0; // Reset index for GETNEXT sequence
+            _next_feature_index = 0; // Reset index for subsequent GETNEXT messages.
             BiDiBMessage response;
             response.length = 4;
             response.address[0] = 0;
@@ -265,14 +297,15 @@ void BiDiB::handleMessages() {
                 sendMessage(response);
                 _next_feature_index++;
             } else {
+                // End of feature list
                 BiDiBMessage response;
                 response.length = 4;
                 response.address[0] = 0;
                 response.msg_num = msg.msg_num;
                 response.msg_type = MSG_FEATURE_NA;
-                response.data[0] = 255; // End of list
+                response.data[0] = 255; // Indicates end of list
                 sendMessage(response);
-                _next_feature_index = 0; // Reset after sequence
+                _next_feature_index = 0; // Reset for next time
             }
             break;
         }
@@ -309,7 +342,7 @@ void BiDiB::handleMessages() {
             uint8_t value = msg.data[1];
             setFeature(feature_num, value);
 
-            // Respond with the new value
+            // Acknowledge by sending the new value back.
             BiDiBMessage response;
             response.length = 5;
             response.address[0] = 0;
@@ -320,21 +353,28 @@ void BiDiB::handleMessages() {
             sendMessage(response);
             break;
         }
+
+        // --- Command Station State ---
         case MSG_CS_STATE: {
             _track_state = msg.data[0];
             break;
         }
         case MSG_CS_DRIVE_ACK: {
-            // No action needed for this message
+            // This library does not currently process drive acknowledgments.
+            // This is a placeholder for future implementation.
             break;
         }
     }
 }
 
+// =============================================================================
+// Internal Helper Functions
+// =============================================================================
+
 int BiDiB::findNode(const uint8_t* unique_id) {
     for (int i = 0; i < _node_count; ++i) {
         if (memcmp(_node_table[i].unique_id, unique_id, 7) == 0) {
-            return i; // Node found
+            return i; // Node found at index i
         }
     }
     return -1; // Node not found
@@ -364,7 +404,10 @@ void BiDiB::sendByte(uint8_t byte, uint8_t &crc) {
 
 void BiDiB::sendMessage(const BiDiBMessage& msg) {
     uint8_t crc = 0;
+
     bidib_serial->write(BIDIB_MAGIC);
+
+    // Send length, address, message number, and type
     sendByte(msg.length, crc);
     uint8_t addr_len = 0;
     for (int i = 0; i < 4; i++) {
@@ -374,27 +417,38 @@ void BiDiB::sendMessage(const BiDiBMessage& msg) {
     for (int i = 0; i < addr_len; ++i) { sendByte(msg.address[i], crc); }
     sendByte(msg.msg_num, crc);
     sendByte(msg.msg_type, crc);
+
+    // Send data payload
     uint8_t data_len = msg.length - addr_len - 2;
     for (int i = 0; i < data_len; ++i) { sendByte(msg.data[i], crc); }
+
+    // Send the calculated CRC
     if (crc == BIDIB_MAGIC || crc == BIDIB_ESCAPE) {
         bidib_serial->write(BIDIB_ESCAPE);
         bidib_serial->write(crc ^ 0x20);
     } else {
         bidib_serial->write(crc);
     }
+
     bidib_serial->write(BIDIB_MAGIC);
 }
 
 bool BiDiB::receiveMessage(BiDiBMessage& msg) {
     if (bidib_serial->read() != BIDIB_MAGIC) { return false; }
+
     uint8_t crc = 0;
+
+    // Helper lambda to read a byte from the serial stream and handle escaping.
     auto readContentByte = [&]() {
         uint8_t byte = bidib_serial->read();
         if (byte == BIDIB_ESCAPE) { byte = bidib_serial->read() ^ 0x20; }
         updateCrc(byte, crc);
         return byte;
     };
+
     msg.length = readContentByte();
+
+    // Read address, message number, and type
     uint8_t addr_len = 0;
     for (int i = 0; i < 4; ++i) {
         msg.address[i] = readContentByte();
@@ -403,13 +457,23 @@ bool BiDiB::receiveMessage(BiDiBMessage& msg) {
     }
     msg.msg_num = readContentByte();
     msg.msg_type = readContentByte();
+
+    // Read data payload
     uint8_t data_len = msg.length - addr_len - 2;
     for (int i = 0; i < data_len; ++i) { msg.data[i] = readContentByte(); }
+
+    // Read and verify the CRC
     uint8_t received_crc = bidib_serial->read();
     if (received_crc == BIDIB_ESCAPE) { received_crc = bidib_serial->read() ^ 0x20; }
+
     if (bidib_serial->read() != BIDIB_MAGIC) { return false; }
+
     return crc == received_crc;
 }
+
+// =============================================================================
+// Core Arduino Sketch Functions
+// =============================================================================
 
 void BiDiB::begin(Stream &serial) {
     bidib_serial = &serial;

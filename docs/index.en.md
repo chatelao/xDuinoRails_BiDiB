@@ -23,6 +23,12 @@ The transport specification describes the physical transmission layers.
 
 - [Transport Protocols Overview](./en/transport/intro.md)
 
+## Library Usage
+
+This section describes how to use this Arduino library.
+
+- [Library User Guide](./en/usage/library_usage.md)
+
 ## Examples
 
 - [Example of an Occupancy Message](./en/examples/occupancy_message.md)

@@ -2,6 +2,19 @@
 
 This document describes the control of command station devices in the BiDiB protocol.
 
+> **Note on Library Implementation:**
+> This Arduino library implements a subset of the features described below.
+>
+> **Implemented Features:**
+> - `MSG_CS_SET_STATE`: Control of the track power (`setTrackState()`).
+> - `MSG_CS_DRIVE`: Sending drive and function commands (`drive()`).
+> - `MSG_CS_STATE`: The library processes this message to know the current track state.
+>
+> **Features Not Yet Implemented:**
+> - Acknowledgment messages (`MSG_CS_DRIVE_ACK`, `MSG_CS_ACCESSORY_ACK`).
+> - Accessory control (`MSG_CS_ACCESSORY`).
+> - Programming on Main (`MSG_CS_POM`).
+
 ## 1. General
 
 Command stations are nodes that can generate a DCC signal. BiDiB allows the parallel operation of multiple DCC systems, e.g., for a separate programming track.
