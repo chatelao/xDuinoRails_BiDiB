@@ -45,6 +45,7 @@ BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false), _system_enabled(t
     setFeature(BIDIB_FEATURE_MSG_RECEIVE_COUNT, 4);
 
     _track_state = BIDIB_CS_STATE_OFF;
+    _driveAckCallback = nullptr;
 }
 
 // =============================================================================
@@ -63,6 +64,10 @@ void BiDiB::drive(uint16_t address, int8_t speed, uint8_t functions) {
     msg.data[3] = speed;
     msg.data[4] = functions;
     sendMessage(msg);
+}
+
+void BiDiB::onDriveAck(DriveAckCallback callback) {
+    _driveAckCallback = callback;
 }
 
 void BiDiB::setTrackState(uint8_t state) {
@@ -360,8 +365,11 @@ void BiDiB::handleMessages() {
             break;
         }
         case MSG_CS_DRIVE_ACK: {
-            // This library does not currently process drive acknowledgments.
-            // This is a placeholder for future implementation.
+            if (_driveAckCallback != nullptr) {
+                uint16_t address = msg.data[0] | (msg.data[1] << 8);
+                uint8_t status = msg.data[2];
+                _driveAckCallback(address, status);
+            }
             break;
         }
     }

@@ -88,6 +88,11 @@ struct BiDiBFeature
     uint8_t value;
 };
 
+/// @brief Callback function type for drive acknowledgements.
+/// @param address The DCC address of the locomotive.
+/// @param status The acknowledgement status.
+typedef void (*DriveAckCallback)(uint16_t address, uint8_t status);
+
 //================================================================================
 // BiDiB Class Definition
 //================================================================================
@@ -166,6 +171,10 @@ public:
     /// @param functions A bitmask representing the active functions (F0-F7).
     void drive(uint16_t address, int8_t speed, uint8_t functions);
 
+    /// @brief Registers a callback function to be called when a drive acknowledgement is received.
+    /// @param callback The function to be called.
+    void onDriveAck(DriveAckCallback callback);
+
     // --- Node Properties ---
     uint8_t unique_id[7];       ///< The unique ID of this node.
     uint8_t node_table_version; ///< The version of the node table.
@@ -182,6 +191,7 @@ protected:
     uint8_t _node_count;
     bool _isLoggedIn;
     uint8_t _track_state;
+    DriveAckCallback _driveAckCallback;
 
 private:
     /// @brief Receives and validates an incoming BiDiB message from the serial stream.

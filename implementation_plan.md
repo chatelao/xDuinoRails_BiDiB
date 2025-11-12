@@ -62,8 +62,8 @@ Vor jeder neuen Implementierung ist dieses Dokument zu konsultieren. Nach Abschl
     - *Status: `setTrackState()` ist implementiert und `MSG_CS_STATE` wird verarbeitet.*
 - [x] **3.2. Lok-Steuerung:**
     - [x] Implementierung von `MSG_CS_DRIVE` zur Steuerung von Geschwindigkeit und Funktionen.
-    - [ ] Handling von `MSG_CS_DRIVE_ACK`-Quittungen.
-    - *Status: `drive()` ist implementiert. Das Handling von `MSG_CS_DRIVE_ACK` ist noch offen.*
+    - [x] Handling von `MSG_CS_DRIVE_ACK`-Quittungen.
+    - *Status: `drive()` ist implementiert. Das Handling von `MSG_CS_DRIVE_ACK` wurde über einen Callback-Mechanismus realisiert.*
 - [ ] **3.3. DCC-Zubehör:**
     - [ ] Implementierung von `MSG_CS_ACCESSORY` zur Steuerung von Weichen und Signalen über das Gleissignal.
     - [ ] Handling von `MSG_CS_ACCESSORY_ACK`-Quittungen.
