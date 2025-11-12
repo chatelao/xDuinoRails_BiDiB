@@ -48,6 +48,8 @@ BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false), _system_enabled(t
     _driveAckCallback = nullptr;
     _accessoryAckCallback = nullptr;
     _pomAckCallback = nullptr;
+    _occupancyCallback = nullptr;
+    _occupancyMultipleCallback = nullptr;
 }
 
 // =============================================================================
@@ -123,6 +125,18 @@ void BiDiB::setTrackState(uint8_t state) {
 }
 
 // =============================================================================
+// Occupancy Reporting
+// =============================================================================
+
+void BiDiB::onOccupancy(OccupancyCallback callback) {
+    _occupancyCallback = callback;
+}
+
+void BiDiB::onOccupancyMultiple(OccupancyMultipleCallback callback) {
+    _occupancyMultipleCallback = callback;
+}
+
+// =============================================================================
 // Feature Management
 // =============================================================================
 
@@ -194,7 +208,9 @@ bool BiDiB::isLoggedIn() {
 void BiDiB::handleMessages() {
     if (!messageAvailable()) { return; }
 
-    BiDiBMessage msg = getLastMessage();
+    // Once we start handling, we consume the message.
+    _messageAvailable = false;
+    BiDiBMessage msg = _lastMessage;
 
     // Handle system enable/disable immediately, regardless of the current state.
     if (msg.msg_type == MSG_SYS_ENABLE) {
@@ -430,6 +446,30 @@ void BiDiB::handleMessages() {
             }
             break;
         }
+
+        // --- Occupancy Reporting ---
+        case MSG_BM_OCC: {
+            if (_occupancyCallback != nullptr) {
+                uint8_t detectorNum = msg.data[0];
+                _occupancyCallback(detectorNum, true);
+            }
+            break;
+        }
+        case MSG_BM_FREE: {
+            if (_occupancyCallback != nullptr) {
+                uint8_t detectorNum = msg.data[0];
+                _occupancyCallback(detectorNum, false);
+            }
+            break;
+        }
+        case MSG_BM_MULTIPLE: {
+            if (_occupancyMultipleCallback != nullptr) {
+                uint8_t baseNum = msg.data[0];
+                uint8_t size = msg.data[1];
+                _occupancyMultipleCallback(baseNum, size, &msg.data[2]);
+            }
+            break;
+        }
     }
 }
 
@@ -531,10 +571,11 @@ bool BiDiB::receiveMessage(BiDiBMessage& msg) {
     // Read and verify the CRC
     uint8_t received_crc = bidib_serial->read();
     if (received_crc == BIDIB_ESCAPE) { received_crc = bidib_serial->read() ^ 0x20; }
+    updateCrc(received_crc, crc); // The CRC of the full message (including CRC byte) must be 0
 
     if (bidib_serial->read() != BIDIB_MAGIC) { return false; }
 
-    return crc == received_crc;
+    return crc == 0;
 }
 
 // =============================================================================
