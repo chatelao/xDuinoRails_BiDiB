@@ -46,6 +46,7 @@ BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false), _system_enabled(t
 
     _track_state = BIDIB_CS_STATE_OFF;
     _driveAckCallback = nullptr;
+    _accessoryAckCallback = nullptr;
 }
 
 // =============================================================================
@@ -68,6 +69,23 @@ void BiDiB::drive(uint16_t address, int8_t speed, uint8_t functions) {
 
 void BiDiB::onDriveAck(DriveAckCallback callback) {
     _driveAckCallback = callback;
+}
+
+void BiDiB::accessory(uint16_t address, uint8_t output, uint8_t state) {
+    BiDiBMessage msg;
+    msg.length = 7;
+    msg.address[0] = 0; // Broadcast to command station
+    msg.msg_num = 0;
+    msg.msg_type = MSG_CS_ACCESSORY;
+    msg.data[0] = address & 0xFF;
+    msg.data[1] = (address >> 8) & 0xFF;
+    msg.data[2] = output;
+    msg.data[3] = state;
+    sendMessage(msg);
+}
+
+void BiDiB::onAccessoryAck(AccessoryAckCallback callback) {
+    _accessoryAckCallback = callback;
 }
 
 void BiDiB::setTrackState(uint8_t state) {
@@ -369,6 +387,14 @@ void BiDiB::handleMessages() {
                 uint16_t address = msg.data[0] | (msg.data[1] << 8);
                 uint8_t status = msg.data[2];
                 _driveAckCallback(address, status);
+            }
+            break;
+        }
+        case MSG_CS_ACCESSORY_ACK: {
+            if (_accessoryAckCallback != nullptr) {
+                uint16_t address = msg.data[0] | (msg.data[1] << 8);
+                uint8_t status = msg.data[2];
+                _accessoryAckCallback(address, status);
             }
             break;
         }

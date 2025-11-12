@@ -64,9 +64,9 @@ Vor jeder neuen Implementierung ist dieses Dokument zu konsultieren. Nach Abschl
     - [x] Implementierung von `MSG_CS_DRIVE` zur Steuerung von Geschwindigkeit und Funktionen.
     - [x] Handling von `MSG_CS_DRIVE_ACK`-Quittungen.
     - *Status: `drive()` ist implementiert. Das Handling von `MSG_CS_DRIVE_ACK` wurde über einen Callback-Mechanismus realisiert.*
-- [ ] **3.3. DCC-Zubehör:**
-    - [ ] Implementierung von `MSG_CS_ACCESSORY` zur Steuerung von Weichen und Signalen über das Gleissignal.
-    - [ ] Handling von `MSG_CS_ACCESSORY_ACK`-Quittungen.
+- [x] **3.3. DCC-Zubehör:**
+    - [x] Implementierung von `MSG_CS_ACCESSORY` zur Steuerung von Weichen und Signalen über das Gleissignal.
+    - [x] Handling von `MSG_CS_ACCESSORY_ACK`-Quittungen.
 - [ ] **3.4. Programmierung:**
     - [ ] Implementierung von PoM (`MSG_CS_POM` / `MSG_CS_POM_ACK`).
 

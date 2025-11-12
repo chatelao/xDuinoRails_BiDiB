@@ -46,7 +46,9 @@ const uint8_t MSG_FEATURE_NA = 0x8E;
 // --- Command Station Messages ---
 const uint8_t MSG_CS_SET_STATE = 0x48;
 const uint8_t MSG_CS_DRIVE = 0x40;
+const uint8_t MSG_CS_ACCESSORY = 0x42;
 const uint8_t MSG_CS_DRIVE_ACK = 0xE0;
+const uint8_t MSG_CS_ACCESSORY_ACK = 0xE2;
 const uint8_t MSG_CS_STATE = 0xE9;
 
 // --- Command Station Constants ---
@@ -92,6 +94,11 @@ struct BiDiBFeature
 /// @param address The DCC address of the locomotive.
 /// @param status The acknowledgement status.
 typedef void (*DriveAckCallback)(uint16_t address, uint8_t status);
+
+/// @brief Callback function type for accessory acknowledgements.
+/// @param address The DCC address of the accessory.
+/// @param status The acknowledgement status.
+typedef void (*AccessoryAckCallback)(uint16_t address, uint8_t status);
 
 //================================================================================
 // BiDiB Class Definition
@@ -175,6 +182,16 @@ public:
     /// @param callback The function to be called.
     void onDriveAck(DriveAckCallback callback);
 
+    /// @brief Sends a command to a DCC accessory.
+    /// @param address The DCC address of the accessory.
+    /// @param output The output to control (0-3).
+    /// @param state The desired state of the output (0 = off, 1 = on).
+    void accessory(uint16_t address, uint8_t output, uint8_t state);
+
+    /// @brief Registers a callback function to be called when an accessory acknowledgement is received.
+    /// @param callback The function to be called.
+    void onAccessoryAck(AccessoryAckCallback callback);
+
     // --- Node Properties ---
     uint8_t unique_id[7];       ///< The unique ID of this node.
     uint8_t node_table_version; ///< The version of the node table.
@@ -192,6 +209,7 @@ protected:
     bool _isLoggedIn;
     uint8_t _track_state;
     DriveAckCallback _driveAckCallback;
+    AccessoryAckCallback _accessoryAckCallback;
 
 private:
     /// @brief Receives and validates an incoming BiDiB message from the serial stream.
