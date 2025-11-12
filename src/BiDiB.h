@@ -54,9 +54,14 @@ const uint8_t MSG_CS_POM_ACK = 0xE4;
 const uint8_t MSG_CS_STATE = 0xE9;
 
 // --- Occupancy Messages ---
+const uint8_t MSG_BM_GET_RANGE = 0xA0;
 const uint8_t MSG_BM_MULTIPLE = 0xA1;
 const uint8_t MSG_BM_OCC = 0xA2;
 const uint8_t MSG_BM_FREE = 0xA3;
+const uint8_t MSG_BM_MIRROR_OCC = 0xA8;
+const uint8_t MSG_BM_MIRROR_FREE = 0xA9;
+const uint8_t MSG_BM_MIRROR_MULTIPLE = 0xAA;
+
 
 // --- Command Station Constants ---
 const uint8_t BIDIB_CS_STATE_OFF = 0;  ///< Track voltage is off
@@ -86,9 +91,11 @@ struct BiDiBMessage
 const uint8_t BIDIB_MAX_FEATURES = 16;
 
 // --- Feature Constants ---
-const uint8_t BIDIB_FEATURE_FW_UPDATE_SUPPORT = 0; ///< 1 if firmware update is supported
-const uint8_t BIDIB_FEATURE_STRING_SIZE = 1;       ///< Maximum size of strings
-const uint8_t BIDIB_FEATURE_MSG_RECEIVE_COUNT = 2; ///< How many messages can be received at once
+const uint8_t BIDIB_FEATURE_FW_UPDATE_SUPPORT = 0;     ///< 1 if firmware update is supported
+const uint8_t BIDIB_FEATURE_STRING_SIZE = 1;           ///< Maximum size of strings
+const uint8_t BIDIB_FEATURE_MSG_RECEIVE_COUNT = 2;     ///< How many messages can be received at once
+const uint8_t FEATURE_BM_SECACK_AVAILABLE = 2;         ///< Indicates if Secure-ACK is supported
+const uint8_t FEATURE_BM_SECACK_ON = 3;                ///< Enables the Secure-ACK mechanism
 
 /// @brief Structure representing a node on the BiDiB bus.
 struct BiDiBNode
@@ -128,6 +135,24 @@ typedef void (*OccupancyCallback)(uint8_t detectorNum, bool occupied);
 /// @param size The number of detectors reported.
 /// @param data Pointer to the bitmap data representing the states.
 typedef void (*OccupancyMultipleCallback)(uint8_t baseNum, uint8_t size, const uint8_t* data);
+
+
+//================================================================================
+// Secure ACK Configuration
+//================================================================================
+
+const unsigned long SECURE_ACK_TIMEOUT = 1000; ///< Timeout in milliseconds for Secure-ACK
+const uint8_t SECURE_ACK_RETRIES = 3;          ///< Number of retries for a Secure-ACK message
+const uint8_t MAX_PENDING_SECURE_ACKS = 8;     ///< Maximum number of parallel Secure-ACKs
+
+/// @brief Structure to hold information about a pending Secure-ACK message.
+struct PendingSecureAck
+{
+    bool active;
+    BiDiBMessage message;
+    unsigned long timestamp;
+    uint8_t retries;
+};
 
 
 //================================================================================
@@ -242,6 +267,17 @@ public:
     /// @param callback The function to be called.
     void onOccupancyMultiple(OccupancyMultipleCallback callback);
 
+    /// @brief Sends an occupancy report for a single detector. If Secure-ACK is enabled, this will be handled automatically.
+    /// @param detectorNum The number of the detector (0-255).
+    /// @param occupied True if the detector is occupied, false if it is free.
+    void sendOccupancySingle(uint8_t detectorNum, bool occupied);
+
+    /// @brief Sends an occupancy report for a range of detectors. If Secure-ACK is enabled, this will be handled automatically.
+    /// @param baseNum The base number of the first detector.
+    /// @param size The number of detectors to report.
+    /// @param data A pointer to the bitmap data representing the detector states.
+    void sendOccupancyMultiple(uint8_t baseNum, uint8_t size, const uint8_t* data);
+
     // --- Node Properties ---
     uint8_t unique_id[7];       ///< The unique ID of this node.
     uint8_t node_table_version; ///< The version of the node table.
@@ -285,8 +321,14 @@ private:
     /// @param crc A reference to the CRC checksum to update.
     void updateCrc(uint8_t byte, uint8_t &crc);
 
+    /// @brief Adds a message to the pending Secure-ACK list.
+    /// @param msg The message to add.
+    void addPendingSecureAck(const BiDiBMessage &msg);
+
     Stream *bidib_serial;
     uint8_t protocol_version[2] = {0, 1}; // V 0.1
+
+    PendingSecureAck _pendingSecureAcks[MAX_PENDING_SECURE_ACKS];
 };
 
 #endif
