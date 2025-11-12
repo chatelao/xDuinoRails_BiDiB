@@ -13,13 +13,17 @@ Vor jeder neuen Implementierung ist dieses Dokument zu konsultieren. Nach Abschl
 - [x] **1.1. Nachrichten-Framing:**
     - [x] Implementierung der `MAGIC`-Bytes (0xFE) zur Erkennung von Nachrichtenanfang und -ende.
     - [x] Implementierung des Escape-Mechanismus für `0xFE` und `0xFD`.
+    - *Status: Vollständig implementiert in `receiveMessage` und `sendByte`.*
 - [x] **1.2. Datensicherung:**
     - [x] Implementierung der CRC8-Prüfsummenberechnung (Polynom: `0x31`).
+    - *Status: Vollständig implementiert in `calculateCrc` und wird bei Sende- und Empfangsvorgängen verwendet.*
 - [x] **1.3. Nachrichten-Struktur:**
     - [x] Erstellung von Datenstrukturen zur Repräsentation von BiDiB-Nachrichten (`MSG_LENGTH`, `MSG_ADDR`, `MSG_NUM`, `MSG_TYPE`, `DATA`).
     - [x] Entwicklung von Funktionen zum Serialisieren (Erstellen eines Byte-Streams aus einer Nachrichten-Struktur) und Deserialisieren (Parsen eines Byte-Streams in eine Nachrichten-Struktur).
+    - *Status: `BiDiBMessage`-Struktur und `sendMessage`/`receiveMessage` sind implementiert.*
 - [x] **1.4. Transport-Schicht:**
     - [x] Implementierung einer grundlegenden seriellen Kommunikation (UART) für die Verbindung zum BiDiB-Interface.
+    - *Status: Die Bibliothek verwendet die Arduino `Stream`-Klasse für die serielle Kommunikation.*
 
 ---
 
@@ -32,15 +36,19 @@ Vor jeder neuen Implementierung ist dieses Dokument zu konsultieren. Nach Abschl
         - [x] `MSG_SYS_GET_MAGIC` / `MSG_SYS_MAGIC`
         - [x] `MSG_SYS_GET_P_VERSION` / `MSG_SYS_P_VERSION`
         - [x] `MSG_SYS_GET_UNIQUE_ID` / `MSG_SYS_UNIQUE_ID`
+    - *Status: Grundlegende Systemnachrichten werden in `handleMessages` verarbeitet.*
 - [x] **2.2. Knoten-Management:**
     - [x] Implementierung der Logon-Sequenz.
     - [x] Verwaltung der Knotentabelle (`MSG_NODETAB_GETALL`, `MSG_NODETAB_GETNEXT` / `MSG_NODETAB_COUNT`, `MSG_NODETAB`).
     - [x] Handling von neuen und verlorenen Knoten (`MSG_NODE_NEW`, `MSG_NODE_LOST`).
+    - *Status: Logon (`logon()`) und eine lokale Knotentabelle (`_node_table`) sind implementiert.*
 - [x] **2.3. Feature-Management:**
     - [x] Implementierung der Abfrage von Knoteneigenschaften (`MSG_FEATURE_GETALL`, `MSG_FEATURE_GETNEXT`, `MSG_FEATURE_GET` / `MSG_FEATURE_COUNT`, `MSG_FEATURE`, `MSG_FEATURE_NA`).
     - [x] Implementierung zum Setzen von Features (`MSG_FEATURE_SET`).
+    - *Status: `setFeature()` und `getFeature()` sind implementiert. Die Bibliothek antwortet auf Feature-Anfragen.*
 - [x] **2.4. System-Steuerung:**
     - [x] Implementierung von `MSG_SYS_ENABLE` und `MSG_SYS_DISABLE` zur Steuerung des Nachrichtenflusses.
+    - *Status: `enable()` und `disable()` sind implementiert.*
 
 ---
 
@@ -51,9 +59,11 @@ Vor jeder neuen Implementierung ist dieses Dokument zu konsultieren. Nach Abschl
 - [x] **3.1. Gleis-Zustand:**
     - [x] Implementierung von `MSG_CS_SET_STATE` zur Steuerung der Gleisspannung (GO, STOP, OFF).
     - [x] Handling von `MSG_CS_STATE`-Antworten.
+    - *Status: `setTrackState()` ist implementiert und `MSG_CS_STATE` wird verarbeitet.*
 - [x] **3.2. Lok-Steuerung:**
     - [x] Implementierung von `MSG_CS_DRIVE` zur Steuerung von Geschwindigkeit und Funktionen.
-    - [x] Handling von `MSG_CS_DRIVE_ACK`-Quittungen.
+    - [ ] Handling von `MSG_CS_DRIVE_ACK`-Quittungen.
+    - *Status: `drive()` ist implementiert. Das Handling von `MSG_CS_DRIVE_ACK` ist noch offen.*
 - [ ] **3.3. DCC-Zubehör:**
     - [ ] Implementierung von `MSG_CS_ACCESSORY` zur Steuerung von Weichen und Signalen über das Gleissignal.
     - [ ] Handling von `MSG_CS_ACCESSORY_ACK`-Quittungen.

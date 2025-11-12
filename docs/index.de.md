@@ -23,6 +23,12 @@ Die Transport-Spezifikation beschreibt die physikalischen Übertragungsschichten
 
 - [Übersicht der Transportprotokolle](./de/transport/intro.md)
 
+## Verwendung der Bibliothek
+
+Dieser Abschnitt beschreibt die Verwendung dieser Arduino-Bibliothek.
+
+- [Benutzerhandbuch für die Bibliothek](./de/usage/library_usage.md)
+
 ## Beispiele
 
 - [Beispiel einer Belegtmeldung](./de/examples/occupancy_message.md)

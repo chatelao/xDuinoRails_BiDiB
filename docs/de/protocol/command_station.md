@@ -2,6 +2,19 @@
 
 Dieses Dokument beschreibt die Ansteuerung von Gleisausgabe-Geräten (Command Stations) im BiDiB-Protokoll.
 
+> **Hinweis zur Bibliotheks-Implementierung:**
+> Diese Arduino-Bibliothek implementiert einen Teil der unten beschriebenen Funktionen.
+>
+> **Implementierte Funktionen:**
+> - `MSG_CS_SET_STATE`: Steuerung der Gleisspannung (`setTrackState()`).
+> - `MSG_CS_DRIVE`: Senden von Fahr- und Funktionsbefehlen (`drive()`).
+> - `MSG_CS_STATE`: Die Bibliothek verarbeitet diese Nachricht, um den aktuellen Gleiszustand zu kennen.
+>
+> **Noch nicht implementierte Funktionen:**
+> - Quittungsnachrichten (`MSG_CS_DRIVE_ACK`, `MSG_CS_ACCESSORY_ACK`).
+> - Zubehörsteuerung (`MSG_CS_ACCESSORY`).
+> - Programmierung am Hauptgleis (`MSG_CS_POM`).
+
 ## 1. Allgemeines
 
 Gleisausgabe-Geräte sind Knoten, die ein DCC-Signal erzeugen können. BiDiB ermöglicht den parallelen Betrieb mehrerer DCC-Systeme, z.B. für ein separates Programmiergleis.
