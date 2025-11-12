@@ -22,25 +22,43 @@ TestBiDiB bidib;
 MockStream mockSerial;
 
 // Global variables to check if the callback was called
-bool callback_fired = false;
-uint16_t callback_address = 0;
-uint8_t callback_status = 0;
+bool drive_callback_fired = false;
+uint16_t drive_callback_address = 0;
+uint8_t drive_callback_status = 0;
+
+bool accessory_callback_fired = false;
+uint16_t accessory_callback_address = 0;
+uint8_t accessory_callback_status = 0;
 
 // Callback function for drive acknowledgements
 void driveAckCallback(uint16_t address, uint8_t status) {
-    callback_fired = true;
-    callback_address = address;
-    callback_status = status;
+    drive_callback_fired = true;
+    drive_callback_address = address;
+    drive_callback_status = status;
+}
+
+// Callback function for accessory acknowledgements
+void accessoryAckCallback(uint16_t address, uint8_t status) {
+    accessory_callback_fired = true;
+    accessory_callback_address = address;
+    accessory_callback_status = status;
 }
 
 void setUp(void) {
     bidib.begin(mockSerial);
     mockSerial.clear();
-    // Reset callback state before each test
-    callback_address = 0;
-    callback_status = 0;
-    callback_fired = false;
+
+    // Reset drive callback state before each test
+    drive_callback_address = 0;
+    drive_callback_status = 0;
+    drive_callback_fired = false;
     bidib.onDriveAck(nullptr);
+
+    // Reset accessory callback state before each test
+    accessory_callback_address = 0;
+    accessory_callback_status = 0;
+    accessory_callback_fired = false;
+    bidib.onAccessoryAck(nullptr);
 }
 
 void tearDown(void) {
@@ -154,9 +172,9 @@ void test_receive_drive_ack_callback(void) {
     bidib.handleMessages();
 
     // 3. Check if the callback was fired with the correct data
-    TEST_ASSERT_TRUE(callback_fired);
-    TEST_ASSERT_EQUAL(3, callback_address);
-    TEST_ASSERT_EQUAL(1, callback_status);
+    TEST_ASSERT_TRUE(drive_callback_fired);
+    TEST_ASSERT_EQUAL(3, drive_callback_address);
+    TEST_ASSERT_EQUAL(1, drive_callback_status);
 }
 
 void test_receive_drive_ack_no_callback(void) {
@@ -173,7 +191,63 @@ void test_receive_drive_ack_no_callback(void) {
     bidib.handleMessages();
 
     // 3. Check that the callback was NOT fired
-    TEST_ASSERT_FALSE(callback_fired);
+    TEST_ASSERT_FALSE(drive_callback_fired);
+}
+
+void test_send_accessory_command(void) {
+    bidib.accessory(10, 1, 1); // Address 10, Output 1, State ON
+
+    // FE 07 00 00 42 0A 00 01 01 4B FE
+    TEST_ASSERT_EQUAL(11, mockSerial.available_outgoing());
+    TEST_ASSERT_EQUAL(BIDIB_MAGIC, mockSerial.read_outgoing());
+    TEST_ASSERT_EQUAL(7, mockSerial.read_outgoing());
+    TEST_ASSERT_EQUAL(0, mockSerial.read_outgoing());
+    TEST_ASSERT_EQUAL(0, mockSerial.read_outgoing());
+    TEST_ASSERT_EQUAL(MSG_CS_ACCESSORY, mockSerial.read_outgoing());
+    TEST_ASSERT_EQUAL(10, mockSerial.read_outgoing()); // ADDR_L
+    TEST_ASSERT_EQUAL(0, mockSerial.read_outgoing());  // ADDR_H
+    TEST_ASSERT_EQUAL(1, mockSerial.read_outgoing());  // OUTPUT
+    TEST_ASSERT_EQUAL(1, mockSerial.read_outgoing());  // STATE
+    uint8_t data[] = {7, 0, 0, 0x42, 10, 0, 1, 1};
+    uint8_t crc = bidib.calculateCrc(data, sizeof(data));
+    TEST_ASSERT_EQUAL(crc, mockSerial.read_outgoing()); // CRC
+    TEST_ASSERT_EQUAL(BIDIB_MAGIC, mockSerial.read_outgoing());
+}
+
+void test_receive_accessory_ack_callback(void) {
+    // 1. Register the callback
+    bidib.onAccessoryAck(accessoryAckCallback);
+
+    // 2. Simulate receiving a MSG_CS_ACCESSORY_ACK
+    BiDiBMessage msg;
+    msg.msg_type = MSG_CS_ACCESSORY_ACK;
+    msg.data[0] = 0x0A; // Address L
+    msg.data[1] = 0x00; // Address H
+    msg.data[2] = 0x01; // Status: OK
+    bidib.setTestLastMessage(msg);
+    bidib.handleMessages();
+
+    // 3. Check if the callback was fired with the correct data
+    TEST_ASSERT_TRUE(accessory_callback_fired);
+    TEST_ASSERT_EQUAL(10, accessory_callback_address);
+    TEST_ASSERT_EQUAL(1, accessory_callback_status);
+}
+
+void test_receive_accessory_ack_no_callback(void) {
+    // 1. Do NOT register the callback
+    // bidib.onAccessoryAck(accessoryAckCallback);
+
+    // 2. Simulate receiving a MSG_CS_ACCESSORY_ACK
+    BiDiBMessage msg;
+    msg.msg_type = MSG_CS_ACCESSORY_ACK;
+    msg.data[0] = 0x0A;
+    msg.data[1] = 0x00;
+    msg.data[2] = 0x01;
+    bidib.setTestLastMessage(msg);
+    bidib.handleMessages();
+
+    // 3. Check that the callback was NOT fired
+    TEST_ASSERT_FALSE(accessory_callback_fired);
 }
 
 int main(int argc, char **argv) {
@@ -187,6 +261,9 @@ int main(int argc, char **argv) {
     RUN_TEST(test_send_drive_command);
     RUN_TEST(test_receive_drive_ack_callback);
     RUN_TEST(test_receive_drive_ack_no_callback);
+    RUN_TEST(test_send_accessory_command);
+    RUN_TEST(test_receive_accessory_ack_callback);
+    RUN_TEST(test_receive_accessory_ack_no_callback);
     UNITY_END();
     return 0;
 }
