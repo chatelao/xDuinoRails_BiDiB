@@ -53,6 +53,11 @@ const uint8_t MSG_CS_ACCESSORY_ACK = 0xE2;
 const uint8_t MSG_CS_POM_ACK = 0xE4;
 const uint8_t MSG_CS_STATE = 0xE9;
 
+// --- Occupancy Messages ---
+const uint8_t MSG_BM_MULTIPLE = 0xA1;
+const uint8_t MSG_BM_OCC = 0xA2;
+const uint8_t MSG_BM_FREE = 0xA3;
+
 // --- Command Station Constants ---
 const uint8_t BIDIB_CS_STATE_OFF = 0;  ///< Track voltage is off
 const uint8_t BIDIB_CS_STATE_STOP = 1; ///< Track voltage is on, but zero speed commands are sent
@@ -112,6 +117,18 @@ typedef void (*AccessoryAckCallback)(uint16_t address, uint8_t status);
 /// @param address The DCC address of the decoder.
 /// @param status The acknowledgement status.
 typedef void (*PomAckCallback)(uint16_t address, uint8_t status);
+
+/// @brief Callback function type for single occupancy detector events.
+/// @param detectorNum The number of the detector.
+/// @param occupied True if the detector is occupied (MSG_BM_OCC), false if it is free (MSG_BM_FREE).
+typedef void (*OccupancyCallback)(uint8_t detectorNum, bool occupied);
+
+/// @brief Callback function type for a range of occupancy detectors.
+/// @param baseNum The base number of the first detector.
+/// @param size The number of detectors reported.
+/// @param data Pointer to the bitmap data representing the states.
+typedef void (*OccupancyMultipleCallback)(uint8_t baseNum, uint8_t size, const uint8_t* data);
+
 
 //================================================================================
 // BiDiB Class Definition
@@ -215,6 +232,16 @@ public:
     /// @param callback The function to be called.
     void onPomAck(PomAckCallback callback);
 
+    // --- Occupancy Reporting ---
+
+    /// @brief Registers a callback function to be called for single occupancy detector events (occupied/free).
+    /// @param callback The function to be called.
+    void onOccupancy(OccupancyCallback callback);
+
+    /// @brief Registers a callback function to be called for multiple occupancy detector reports.
+    /// @param callback The function to be called.
+    void onOccupancyMultiple(OccupancyMultipleCallback callback);
+
     // --- Node Properties ---
     uint8_t unique_id[7];       ///< The unique ID of this node.
     uint8_t node_table_version; ///< The version of the node table.
@@ -234,6 +261,8 @@ protected:
     DriveAckCallback _driveAckCallback;
     AccessoryAckCallback _accessoryAckCallback;
     PomAckCallback _pomAckCallback;
+    OccupancyCallback _occupancyCallback;
+    OccupancyMultipleCallback _occupancyMultipleCallback;
 
 private:
     /// @brief Receives and validates an incoming BiDiB message from the serial stream.
