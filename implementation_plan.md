@@ -76,8 +76,9 @@ Vor jeder neuen Implementierung ist dieses Dokument zu konsultieren. Nach Abschl
 
 **Ziel:** Belegtmeldungen und Adressinformationen von der Anlage empfangen und verarbeiten.
 
-- [ ] **4.1. Belegtmeldung:**
-    - [ ] Implementierung des Empfangs von `MSG_BM_OCC`, `MSG_BM_FREE` und `MSG_BM_MULTIPLE`.
+- [x] **4.1. Belegtmeldung:**
+    - [x] Implementierung des Empfangs von `MSG_BM_OCC`, `MSG_BM_FREE` und `MSG_BM_MULTIPLE`.
+    - *Status: Vollständig implementiert und durch Unit-Tests in `test/test_occupancy` abgedeckt.*
 - [ ] **4.2. Secure-ACK:**
     - [ ] Implementierung des Secure-ACK-Mechanismus durch Senden von `MSG_BM_MIRROR_...`-Nachrichten.
 - [ ] **4.3. Adress-Rückmeldung (Railcom):**
