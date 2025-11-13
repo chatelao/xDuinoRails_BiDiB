@@ -82,8 +82,8 @@ Vor jeder neuen Implementierung ist dieses Dokument zu konsultieren. Nach Abschl
 - [x] **4.2. Secure-ACK:**
     - [x] Implementierung des Secure-ACK-Mechanismus (client-seitig) mit Timeout und Wiederholungen.
     - *Status: Vollständig implementiert und durch Unit-Tests in `test/test_secure_ack` abgedeckt.*
-- [ ] **4.3. Adress-Rückmeldung (Railcom):**
-    - [ ] Implementierung des Empfangs von `MSG_BM_ADDRESS` zur Erkennung von Loks in einem Abschnitt.
+- [x] **4.3. Adress-Rückmeldung (Railcom):**
+    - [x] Implementierung des Empfangs von `MSG_BM_ADDRESS` zur Erkennung von Loks in einem Abschnitt.
 - [ ] **4.4. Weitere Rückmeldungen:**
     - [ ] Implementierung des Empfangs von CV-Antworten (`MSG_BM_CV`) und Geschwindigkeit (`MSG_BM_SPEED`).
 
