@@ -65,6 +65,12 @@ const uint8_t MSG_BM_ADDRESS = 0xA4;
 const uint8_t MSG_BM_SPEED = 0xA5;
 const uint8_t MSG_BM_CV = 0xA6;
 
+// --- Accessory Control Messages ---
+const uint8_t MSG_ACCESSORY_SET = 0x38;
+const uint8_t MSG_ACCESSORY_GET = 0x39;
+const uint8_t MSG_ACCESSORY_STATE = 0xB8;
+const uint8_t MSG_ACCESSORY_NOTIFY = 0xB9;
+
 
 // --- Command Station Constants ---
 const uint8_t BIDIB_CS_STATE_OFF = 0;  ///< Track voltage is off
@@ -154,6 +160,11 @@ typedef void (*SpeedCallback)(uint16_t address, uint16_t speed);
 /// @param cv The CV number.
 /// @param value The value of the CV.
 typedef void (*CvCallback)(uint16_t address, uint16_t cv, uint8_t value);
+
+/// @brief Callback function type for native accessory state reports.
+/// @param accessoryNum The number of the accessory.
+/// @param aspect The current aspect (state) of the accessory.
+typedef void (*AccessoryStateCallback)(uint8_t accessoryNum, uint8_t aspect);
 
 
 //================================================================================
@@ -276,6 +287,21 @@ public:
     /// @param callback The function to be called.
     void onPomAck(PomAckCallback callback);
 
+    // --- Accessory Control Functions ---
+
+    /// @brief Sets the state (aspect) of a native BiDiB accessory.
+    /// @param accessoryNum The number of the accessory.
+    /// @param aspect The desired aspect (state) to set.
+    void setAccessory(uint8_t accessoryNum, uint8_t aspect);
+
+    /// @brief Requests the current state of a native BiDiB accessory.
+    /// @param accessoryNum The number of the accessory to query.
+    void getAccessory(uint8_t accessoryNum);
+
+    /// @brief Registers a callback function to be called when a native accessory state report is received.
+    /// @param callback The function to be called.
+    void onAccessoryState(AccessoryStateCallback callback);
+
     // --- Occupancy Reporting ---
 
     /// @brief Registers a callback function to be called for single occupancy detector events (occupied/free).
@@ -333,6 +359,7 @@ protected:
     AddressCallback _addressCallback;
     SpeedCallback _speedCallback;
     CvCallback _cvCallback;
+    AccessoryStateCallback _accessoryStateCallback;
 
 private:
     /// @brief Receives and validates an incoming BiDiB message from the serial stream.
