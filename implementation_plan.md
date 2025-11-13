@@ -93,10 +93,11 @@ Vor jeder neuen Implementierung ist dieses Dokument zu konsultieren. Nach Abschl
 
 **Ziel:** Direkte Steuerung von BiDiB-Zubehörknoten (unabhängig vom DCC-Signal).
 
-- [ ] **5.1. Zubehör-Steuerung:**
-    - [ ] Implementierung von `MSG_ACCESSORY_SET` und `MSG_ACCESSORY_GET`.
-- [ ] **5.2. Zustands-Handling:**
-    - [ ] Verarbeitung von `MSG_ACCESSORY_STATE` (als Antwort auf einen Befehl) und `MSG_ACCESSORY_NOTIFY` (bei spontanen Änderungen).
+- [x] **5.1. Zubehör-Steuerung:**
+    - [x] Implementierung von `MSG_ACCESSORY_SET` und `MSG_ACCESSORY_GET`.
+- [x] **5.2. Zustands-Handling:**
+    - [x] Verarbeitung von `MSG_ACCESSORY_STATE` (als Antwort auf einen Befehl) und `MSG_ACCESSORY_NOTIFY` (bei spontanen Änderungen).
+- *Status: Vollständig implementiert und durch Unit-Tests in `test/test_accessory` abgedeckt.*
 
 ---
 

@@ -51,6 +51,7 @@ BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false), _system_enabled(t
     _occupancyCallback = nullptr;
     _occupancyMultipleCallback = nullptr;
     _addressCallback = nullptr;
+    _accessoryStateCallback = nullptr;
 
     // Initialize the pending Secure-ACKs list.
     for (int i = 0; i < MAX_PENDING_SECURE_ACKS; ++i) {
@@ -128,6 +129,35 @@ void BiDiB::setTrackState(uint8_t state) {
     msg.msg_type = MSG_CS_SET_STATE;
     msg.data[0] = state;
     sendMessage(msg);
+}
+
+// =============================================================================
+// Accessory Control Functions
+// =============================================================================
+
+void BiDiB::setAccessory(uint8_t accessoryNum, uint8_t aspect) {
+    BiDiBMessage msg;
+    msg.length = 5;
+    msg.address[0] = 0; // Address to the local node, will be filled by master
+    msg.msg_num = 0;    // Accessory messages can have sequence numbers, but 0 is fine for simple commands
+    msg.msg_type = MSG_ACCESSORY_SET;
+    msg.data[0] = accessoryNum;
+    msg.data[1] = aspect;
+    sendMessage(msg);
+}
+
+void BiDiB::getAccessory(uint8_t accessoryNum) {
+    BiDiBMessage msg;
+    msg.length = 4;
+    msg.address[0] = 0; // Address to the local node
+    msg.msg_num = 0;
+    msg.msg_type = MSG_ACCESSORY_GET;
+    msg.data[0] = accessoryNum;
+    sendMessage(msg);
+}
+
+void BiDiB::onAccessoryState(AccessoryStateCallback callback) {
+    _accessoryStateCallback = callback;
 }
 
 // =============================================================================
@@ -542,6 +572,17 @@ void BiDiB::handleMessages() {
                 uint16_t cv = msg.data[3] | (msg.data[4] << 8);
                 uint8_t value = msg.data[5];
                 _cvCallback(address, cv, value);
+            }
+            break;
+        }
+
+        // --- Accessory Control ---
+        case MSG_ACCESSORY_STATE:
+        case MSG_ACCESSORY_NOTIFY: {
+            if (_accessoryStateCallback != nullptr) {
+                uint8_t accessoryNum = msg.data[0];
+                uint8_t aspect = msg.data[1];
+                _accessoryStateCallback(accessoryNum, aspect);
             }
             break;
         }
