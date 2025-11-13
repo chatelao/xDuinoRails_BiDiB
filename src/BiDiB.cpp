@@ -50,6 +50,11 @@ BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false), _system_enabled(t
     _pomAckCallback = nullptr;
     _occupancyCallback = nullptr;
     _occupancyMultipleCallback = nullptr;
+
+    // Initialize the pending Secure-ACKs list.
+    for (int i = 0; i < MAX_PENDING_SECURE_ACKS; ++i) {
+        _pendingSecureAcks[i].active = false;
+    }
 }
 
 // =============================================================================
@@ -134,6 +139,38 @@ void BiDiB::onOccupancy(OccupancyCallback callback) {
 
 void BiDiB::onOccupancyMultiple(OccupancyMultipleCallback callback) {
     _occupancyMultipleCallback = callback;
+}
+
+void BiDiB::sendOccupancySingle(uint8_t detectorNum, bool occupied) {
+    BiDiBMessage msg;
+    msg.length = 4;
+    msg.address[0] = 0; // The node's own address will be added by the master
+    msg.msg_num = 0;    // Occupancy messages use sequence numbers, handled by master
+    msg.msg_type = occupied ? MSG_BM_OCC : MSG_BM_FREE;
+    msg.data[0] = detectorNum;
+
+    if (getFeature(FEATURE_BM_SECACK_ON)) {
+        addPendingSecureAck(msg);
+    } else {
+        sendMessage(msg);
+    }
+}
+
+void BiDiB::sendOccupancyMultiple(uint8_t baseNum, uint8_t size, const uint8_t* data) {
+    BiDiBMessage msg;
+    msg.length = 5 + size; // Base length + size of data
+    msg.address[0] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_BM_MULTIPLE;
+    msg.data[0] = baseNum;
+    msg.data[1] = size;
+    memcpy(&msg.data[2], data, size);
+
+    if (getFeature(FEATURE_BM_SECACK_ON)) {
+        addPendingSecureAck(msg);
+    } else {
+        sendMessage(msg);
+    }
 }
 
 // =============================================================================
@@ -470,12 +507,53 @@ void BiDiB::handleMessages() {
             }
             break;
         }
+
+        // --- Secure-ACK Handling ---
+        case MSG_BM_MIRROR_OCC:
+        case MSG_BM_MIRROR_FREE: {
+            uint8_t expected_type = (msg.msg_type == MSG_BM_MIRROR_OCC) ? MSG_BM_OCC : MSG_BM_FREE;
+            for (int i = 0; i < MAX_PENDING_SECURE_ACKS; ++i) {
+                if (_pendingSecureAcks[i].active &&
+                    _pendingSecureAcks[i].message.msg_type == expected_type &&
+                    _pendingSecureAcks[i].message.data[0] == msg.data[0]) {
+                    _pendingSecureAcks[i].active = false; // ACK received
+                    break;
+                }
+            }
+            break;
+        }
+        case MSG_BM_MIRROR_MULTIPLE: {
+            for (int i = 0; i < MAX_PENDING_SECURE_ACKS; ++i) {
+                if (_pendingSecureAcks[i].active &&
+                    _pendingSecureAcks[i].message.msg_type == MSG_BM_MULTIPLE &&
+                    _pendingSecureAcks[i].message.data[0] == msg.data[0]) {
+                    _pendingSecureAcks[i].active = false; // ACK received
+                    break;
+                }
+            }
+            break;
+        }
     }
 }
 
 // =============================================================================
 // Internal Helper Functions
 // =============================================================================
+
+void BiDiB::addPendingSecureAck(const BiDiBMessage &msg) {
+    for (int i = 0; i < MAX_PENDING_SECURE_ACKS; ++i) {
+        if (!_pendingSecureAcks[i].active) {
+            _pendingSecureAcks[i].active = true;
+            _pendingSecureAcks[i].message = msg;
+            _pendingSecureAcks[i].timestamp = millis();
+            _pendingSecureAcks[i].retries = 0;
+            sendMessage(msg);
+            return; // Found a slot and sent the message
+        }
+    }
+    // If no slot is found, the message is dropped.
+    // An alternative could be to log an error.
+}
 
 int BiDiB::findNode(const uint8_t* unique_id) {
     for (int i = 0; i < _node_count; ++i) {
@@ -587,9 +665,30 @@ void BiDiB::begin(Stream &serial) {
 }
 
 void BiDiB::update() {
+    // 1. Process incoming serial data
     if (bidib_serial->available() > 0) {
         if (receiveMessage(_lastMessage)) {
             _messageAvailable = true;
+        }
+    }
+
+    // 2. Handle timeouts for Secure-ACKs
+    if (getFeature(FEATURE_BM_SECACK_ON)) {
+        unsigned long now = millis();
+        for (int i = 0; i < MAX_PENDING_SECURE_ACKS; ++i) {
+            if (_pendingSecureAcks[i].active) {
+                if (now - _pendingSecureAcks[i].timestamp > SECURE_ACK_TIMEOUT) {
+                    if (_pendingSecureAcks[i].retries < SECURE_ACK_RETRIES) {
+                        // Resend the message
+                        _pendingSecureAcks[i].retries++;
+                        _pendingSecureAcks[i].timestamp = now;
+                        sendMessage(_pendingSecureAcks[i].message);
+                    } else {
+                        // Max retries reached, give up
+                        _pendingSecureAcks[i].active = false;
+                    }
+                }
+            }
         }
     }
 }
