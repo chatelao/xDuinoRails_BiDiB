@@ -146,6 +146,14 @@ void BiDiB::onAddress(AddressCallback callback) {
     _addressCallback = callback;
 }
 
+void BiDiB::onSpeedUpdate(SpeedCallback callback) {
+    _speedCallback = callback;
+}
+
+void BiDiB::onCvUpdate(CvCallback callback) {
+    _cvCallback = callback;
+}
+
 void BiDiB::sendOccupancySingle(uint8_t detectorNum, bool occupied) {
     BiDiBMessage msg;
     msg.length = 4;
@@ -517,6 +525,23 @@ void BiDiB::handleMessages() {
                 uint8_t detectorNum = msg.data[0];
                 uint16_t address = msg.data[2] | (msg.data[3] << 8);
                 _addressCallback(detectorNum, address);
+            }
+            break;
+        }
+        case MSG_BM_SPEED: {
+            if (_speedCallback != nullptr) {
+                uint16_t address = msg.data[0] | (msg.data[1] << 8);
+                uint16_t speed = msg.data[2] | (msg.data[3] << 8);
+                _speedCallback(address, speed);
+            }
+            break;
+        }
+        case MSG_BM_CV: {
+            if (_cvCallback != nullptr) {
+                uint16_t address = msg.data[0] | (msg.data[1] << 8);
+                uint16_t cv = msg.data[3] | (msg.data[4] << 8);
+                uint8_t value = msg.data[5];
+                _cvCallback(address, cv, value);
             }
             break;
         }

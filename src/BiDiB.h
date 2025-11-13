@@ -62,6 +62,8 @@ const uint8_t MSG_BM_MIRROR_OCC = 0xA8;
 const uint8_t MSG_BM_MIRROR_FREE = 0xA9;
 const uint8_t MSG_BM_MIRROR_MULTIPLE = 0xAA;
 const uint8_t MSG_BM_ADDRESS = 0xA4;
+const uint8_t MSG_BM_SPEED = 0xA5;
+const uint8_t MSG_BM_CV = 0xA6;
 
 
 // --- Command Station Constants ---
@@ -141,6 +143,17 @@ typedef void (*OccupancyMultipleCallback)(uint8_t baseNum, uint8_t size, const u
 /// @param detectorNum The number of the detector.
 /// @param address The DCC address of the decoder.
 typedef void (*AddressCallback)(uint8_t detectorNum, uint16_t address);
+
+/// @brief Callback function type for speed reporting events.
+/// @param address The DCC address of the locomotive.
+/// @param speed The speed of the locomotive.
+typedef void (*SpeedCallback)(uint16_t address, uint16_t speed);
+
+/// @brief Callback function type for CV reporting events.
+/// @param address The DCC address of the decoder.
+/// @param cv The CV number.
+/// @param value The value of the CV.
+typedef void (*CvCallback)(uint16_t address, uint16_t cv, uint8_t value);
 
 
 //================================================================================
@@ -277,6 +290,14 @@ public:
     /// @param callback The function to be called.
     void onAddress(AddressCallback callback);
 
+    /// @brief Registers a callback function to be called for speed reporting events.
+    /// @param callback The function to be called.
+    void onSpeedUpdate(SpeedCallback callback);
+
+    /// @brief Registers a callback function to be called for CV reporting events.
+    /// @param callback The function to be called.
+    void onCvUpdate(CvCallback callback);
+
     /// @brief Sends an occupancy report for a single detector. If Secure-ACK is enabled, this will be handled automatically.
     /// @param detectorNum The number of the detector (0-255).
     /// @param occupied True if the detector is occupied, false if it is free.
@@ -310,6 +331,8 @@ protected:
     OccupancyCallback _occupancyCallback;
     OccupancyMultipleCallback _occupancyMultipleCallback;
     AddressCallback _addressCallback;
+    SpeedCallback _speedCallback;
+    CvCallback _cvCallback;
 
 private:
     /// @brief Receives and validates an incoming BiDiB message from the serial stream.
