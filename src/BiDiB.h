@@ -61,6 +61,7 @@ const uint8_t MSG_BM_FREE = 0xA3;
 const uint8_t MSG_BM_MIRROR_OCC = 0xA8;
 const uint8_t MSG_BM_MIRROR_FREE = 0xA9;
 const uint8_t MSG_BM_MIRROR_MULTIPLE = 0xAA;
+const uint8_t MSG_BM_ADDRESS = 0xA4;
 
 
 // --- Command Station Constants ---
@@ -135,6 +136,11 @@ typedef void (*OccupancyCallback)(uint8_t detectorNum, bool occupied);
 /// @param size The number of detectors reported.
 /// @param data Pointer to the bitmap data representing the states.
 typedef void (*OccupancyMultipleCallback)(uint8_t baseNum, uint8_t size, const uint8_t* data);
+
+/// @brief Callback function type for address reporting events.
+/// @param detectorNum The number of the detector.
+/// @param address The DCC address of the decoder.
+typedef void (*AddressCallback)(uint8_t detectorNum, uint16_t address);
 
 
 //================================================================================
@@ -267,6 +273,10 @@ public:
     /// @param callback The function to be called.
     void onOccupancyMultiple(OccupancyMultipleCallback callback);
 
+    /// @brief Registers a callback function to be called for address reporting events (e.g., from Railcom detectors).
+    /// @param callback The function to be called.
+    void onAddress(AddressCallback callback);
+
     /// @brief Sends an occupancy report for a single detector. If Secure-ACK is enabled, this will be handled automatically.
     /// @param detectorNum The number of the detector (0-255).
     /// @param occupied True if the detector is occupied, false if it is free.
@@ -299,6 +309,7 @@ protected:
     PomAckCallback _pomAckCallback;
     OccupancyCallback _occupancyCallback;
     OccupancyMultipleCallback _occupancyMultipleCallback;
+    AddressCallback _addressCallback;
 
 private:
     /// @brief Receives and validates an incoming BiDiB message from the serial stream.

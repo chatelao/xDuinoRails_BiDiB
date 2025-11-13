@@ -50,6 +50,7 @@ BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false), _system_enabled(t
     _pomAckCallback = nullptr;
     _occupancyCallback = nullptr;
     _occupancyMultipleCallback = nullptr;
+    _addressCallback = nullptr;
 
     // Initialize the pending Secure-ACKs list.
     for (int i = 0; i < MAX_PENDING_SECURE_ACKS; ++i) {
@@ -139,6 +140,10 @@ void BiDiB::onOccupancy(OccupancyCallback callback) {
 
 void BiDiB::onOccupancyMultiple(OccupancyMultipleCallback callback) {
     _occupancyMultipleCallback = callback;
+}
+
+void BiDiB::onAddress(AddressCallback callback) {
+    _addressCallback = callback;
 }
 
 void BiDiB::sendOccupancySingle(uint8_t detectorNum, bool occupied) {
@@ -504,6 +509,14 @@ void BiDiB::handleMessages() {
                 uint8_t baseNum = msg.data[0];
                 uint8_t size = msg.data[1];
                 _occupancyMultipleCallback(baseNum, size, &msg.data[2]);
+            }
+            break;
+        }
+        case MSG_BM_ADDRESS: {
+            if (_addressCallback != nullptr) {
+                uint8_t detectorNum = msg.data[0];
+                uint16_t address = msg.data[2] | (msg.data[3] << 8);
+                _addressCallback(detectorNum, address);
             }
             break;
         }
