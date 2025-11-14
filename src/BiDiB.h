@@ -86,6 +86,10 @@ const uint8_t MSG_VENDOR_GET = 0x73;
 const uint8_t MSG_VENDOR = 0xF0;
 const uint8_t MSG_VENDOR_ACK = 0xF1;
 
+// --- Firmware Update Messages ---
+const uint8_t MSG_FW_UPDATE_OP = 0x78;
+const uint8_t MSG_FW_UPDATE_STAT = 0xF8;
+
 
 // --- Command Station Constants ---
 const uint8_t BIDIB_CS_STATE_OFF = 0;  ///< Track voltage is off
@@ -108,6 +112,18 @@ const uint8_t BIDIB_BST_STATE_ON_LIMIT = 0x81;   ///< Booster is on and in curre
 const uint8_t BIDIB_BST_DIAG_CURRENT = 0x00;     ///< Diagnostic key for current
 const uint8_t BIDIB_BST_DIAG_VOLTAGE = 0x01;     ///< Diagnostic key for voltage
 const uint8_t BIDIB_BST_DIAG_TEMP = 0x02;        ///< Diagnostic key for temperature
+
+// --- Firmware Update Constants ---
+const uint8_t BIDIB_MSG_FW_UPDATE_OP_ENTER = 0x00;   ///< Enter update mode
+const uint8_t BIDIB_MSG_FW_UPDATE_OP_EXIT = 0x01;    ///< Exit update mode
+const uint8_t BIDIB_MSG_FW_UPDATE_OP_SETDEST = 0x02; ///< Set destination memory
+const uint8_t BIDIB_MSG_FW_UPDATE_OP_DATA = 0x03;    ///< Transmit firmware data
+const uint8_t BIDIB_MSG_FW_UPDATE_OP_DONE = 0x04;    ///< End of data transmission
+
+const uint8_t BIDIB_MSG_FW_UPDATE_STAT_READY = 0x00; ///< Node is ready
+const uint8_t BIDIB_MSG_FW_UPDATE_STAT_EXIT = 0x01;  ///< Node is exiting
+const uint8_t BIDIB_MSG_FW_UPDATE_STAT_DATA = 0x02;  ///< Node is expecting data
+const uint8_t BIDIB_MSG_FW_UPDATE_STAT_ERROR = 255;  ///< Error occurred
 
 //================================================================================
 // BiDiB Data Structures
@@ -211,6 +227,11 @@ typedef void (*VendorAckCallback)(uint8_t node_addr, uint8_t status);
 /// @param name The name of the vendor-specific value.
 /// @param value The value of the vendor-specific parameter.
 typedef void (*VendorDataCallback)(uint8_t node_addr, const char* name, const char* value);
+
+/// @brief Callback function type for firmware update status reports.
+/// @param status The status of the firmware update (see BIDIB_MSG_FW_UPDATE_STAT_* constants).
+/// @param detail Additional detail for the status (e.g., error code).
+typedef void (*FirmwareUpdateStatusCallback)(uint8_t status, uint8_t detail);
 
 
 //================================================================================
@@ -381,6 +402,19 @@ public:
     /// @param callback The function to be called.
     void onVendorData(VendorDataCallback callback);
 
+    // --- Firmware Update Functions ---
+
+    /// @brief Sends a firmware update operation to a node.
+    /// @param node_addr The address of the target node.
+    /// @param op The operation to perform (see BIDIB_MSG_FW_UPDATE_OP_* constants).
+    /// @param data A pointer to the data payload for the operation.
+    /// @param len The length of the data payload.
+    void firmwareUpdateOperation(uint8_t node_addr, uint8_t op, const uint8_t* data = nullptr, size_t len = 0);
+
+    /// @brief Registers a callback function to be called when a firmware update status report is received.
+    /// @param callback The function to be called.
+    void onFirmwareUpdateStatus(FirmwareUpdateStatusCallback callback);
+
     // --- Accessory Control Functions ---
 
     /// @brief Sets the state (aspect) of a native BiDiB accessory.
@@ -458,6 +492,7 @@ protected:
     SpeedCallback _speedCallback;
     CvCallback _cvCallback;
     AccessoryStateCallback _accessoryStateCallback;
+    FirmwareUpdateStatusCallback _firmwareUpdateStatusCallback;
 
 private:
     /// @brief Receives and validates an incoming BiDiB message from the serial stream.
