@@ -110,5 +110,5 @@ Vor jeder neuen Implementierung ist dieses Dokument zu konsultieren. Nach Abschl
     - [x] Verarbeitung von Status- (`MSG_BOOST_STAT`) und Diagnosemeldungen (`MSG_BOOST_DIAGNOSTIC`).
 - [ ] **6.2. Firmware Update:**
     - [ ] Implementierung des kompletten Firmware-Update-Prozesses (`MSG_FW_UPDATE_OP`, `MSG_FW_UPDATE_STAT`).
-- [ ] **6.3. Hersteller-spezifische Konfiguration:**
-    - [ ] Implementierung der `MSG_VENDOR_...`-Nachrichten.
+- [x] **6.3. Hersteller-spezifische Konfiguration:**
+    - [x] Implementierung der `MSG_VENDOR_...`-Nachrichten.

@@ -166,6 +166,65 @@ void BiDiB::onBoosterDiagnostic(BoosterDiagnosticCallback callback) {
 }
 
 // =============================================================================
+// Vendor-Specific Functions
+// =============================================================================
+
+void BiDiB::vendorEnable(uint8_t node_addr) {
+    BiDiBMessage msg;
+    msg.address[0] = node_addr;
+    msg.address[1] = 0;
+    msg.length = 4;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_VENDOR_ENABLE;
+    sendMessage(msg);
+}
+
+void BiDiB::vendorDisable(uint8_t node_addr) {
+    BiDiBMessage msg;
+    msg.address[0] = node_addr;
+    msg.address[1] = 0;
+    msg.length = 4;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_VENDOR_DISABLE;
+    sendMessage(msg);
+}
+
+void BiDiB::onVendorAck(VendorAckCallback callback) {
+    _vendorAckCallback = callback;
+}
+
+void BiDiB::vendorGet(uint8_t node_addr, const char* name) {
+    BiDiBMessage msg;
+    msg.address[0] = node_addr;
+    msg.address[1] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_VENDOR_GET;
+    strncpy((char*)msg.data, name, sizeof(msg.data));
+    msg.length = 4 + strlen(name) + 1;
+    sendMessage(msg);
+}
+
+void BiDiB::vendorSet(uint8_t node_addr, const char* name, const char* value) {
+    BiDiBMessage msg;
+    msg.address[0] = node_addr;
+    msg.address[1] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_VENDOR_SET;
+
+    uint8_t name_len = strlen(name);
+    strncpy((char*)msg.data, name, sizeof(msg.data));
+    msg.data[name_len] = '=';
+    strncpy((char*)msg.data + name_len + 1, value, sizeof(msg.data) - name_len - 1);
+
+    msg.length = 4 + strlen(name) + 1 + strlen(value) + 1;
+    sendMessage(msg);
+}
+
+void BiDiB::onVendorData(VendorDataCallback callback) {
+    _vendorDataCallback = callback;
+}
+
+// =============================================================================
 // Accessory Control Functions
 // =============================================================================
 
@@ -383,6 +442,27 @@ void BiDiB::handleMessages() {
                 response.data[0] = node_table_version;
                 response.data[1] = _node_count;
                 sendMessage(response);
+            }
+            break;
+        }
+        case MSG_VENDOR_ACK: {
+            if (_vendorAckCallback != nullptr) {
+                _vendorAckCallback(msg.address[0], msg.data[0]);
+            }
+            break;
+        }
+        case MSG_VENDOR: {
+            if (_vendorDataCallback != nullptr) {
+                const char* data_str = (const char*)msg.data;
+                const char* separator = strchr(data_str, '=');
+                if (separator != nullptr) {
+                    char name[32];
+                    char value[32];
+                    strncpy(name, data_str, separator - data_str);
+                    name[separator - data_str] = '\0';
+                    strcpy(value, separator + 1);
+                    _vendorDataCallback(msg.address[0], name, value);
+                }
             }
             break;
         }
@@ -762,25 +842,31 @@ bool BiDiB::receiveMessage(BiDiBMessage& msg) {
     auto readContentByte = [&]() {
         uint8_t byte = bidib_serial->read();
         if (byte == BIDIB_ESCAPE) { byte = bidib_serial->read() ^ 0x20; }
-        updateCrc(byte, crc);
         return byte;
     };
 
     msg.length = readContentByte();
+    updateCrc(msg.length, crc);
 
     // Read address, message number, and type
     uint8_t addr_len = 0;
     for (int i = 0; i < 4; ++i) {
         msg.address[i] = readContentByte();
+        updateCrc(msg.address[i], crc);
         addr_len++;
         if (msg.address[i] == 0) break;
     }
     msg.msg_num = readContentByte();
+    updateCrc(msg.msg_num, crc);
     msg.msg_type = readContentByte();
+    updateCrc(msg.msg_type, crc);
 
     // Read data payload
     uint8_t data_len = msg.length - addr_len - 2;
-    for (int i = 0; i < data_len; ++i) { msg.data[i] = readContentByte(); }
+    for (int i = 0; i < data_len; ++i) {
+        msg.data[i] = readContentByte();
+        updateCrc(msg.data[i], crc);
+    }
 
     // Read and verify the CRC
     uint8_t received_crc = bidib_serial->read();

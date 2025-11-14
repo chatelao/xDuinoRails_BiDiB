@@ -78,6 +78,14 @@ const uint8_t MSG_BOOST_QUERY = 0x52;
 const uint8_t MSG_BOOST_STAT = 0xD0;
 const uint8_t MSG_BOOST_DIAGNOSTIC = 0xD1;
 
+// --- User Configuration Messages ---
+const uint8_t MSG_VENDOR_ENABLE = 0x70;
+const uint8_t MSG_VENDOR_DISABLE = 0x71;
+const uint8_t MSG_VENDOR_SET = 0x72;
+const uint8_t MSG_VENDOR_GET = 0x73;
+const uint8_t MSG_VENDOR = 0xF0;
+const uint8_t MSG_VENDOR_ACK = 0xF1;
+
 
 // --- Command Station Constants ---
 const uint8_t BIDIB_CS_STATE_OFF = 0;  ///< Track voltage is off
@@ -192,6 +200,17 @@ typedef void (*BoosterStatusCallback)(uint8_t status);
 /// @param type The type of diagnostic value (see BIDIB_BST_DIAG_* constants).
 /// @param value The diagnostic value.
 typedef void (*BoosterDiagnosticCallback)(uint8_t type, uint16_t value);
+
+/// @brief Callback function type for vendor ACK reports.
+/// @param node_addr The address of the node that sent the ACK.
+/// @param status The acknowledgement status.
+typedef void (*VendorAckCallback)(uint8_t node_addr, uint8_t status);
+
+/// @brief Callback function type for vendor data reports.
+/// @param node_addr The address of the node that sent the data.
+/// @param name The name of the vendor-specific value.
+/// @param value The value of the vendor-specific parameter.
+typedef void (*VendorDataCallback)(uint8_t node_addr, const char* name, const char* value);
 
 
 //================================================================================
@@ -333,6 +352,35 @@ public:
     /// @param callback The function to be called.
     void onBoosterDiagnostic(BoosterDiagnosticCallback callback);
 
+    // --- Vendor-Specific Functions ---
+
+    /// @brief Enables vendor-specific configuration mode on a node.
+    /// @param node_addr The address of the target node.
+    void vendorEnable(uint8_t node_addr);
+
+    /// @brief Disables vendor-specific configuration mode on a node.
+    /// @param node_addr The address of the target node.
+    void vendorDisable(uint8_t node_addr);
+
+    /// @brief Registers a callback function to be called when a vendor acknowledgement is received.
+    /// @param callback The function to be called.
+    void onVendorAck(VendorAckCallback callback);
+
+    /// @brief Reads a vendor-specific parameter from a node.
+    /// @param node_addr The address of the target node.
+    /// @param name The name of the parameter to read.
+    void vendorGet(uint8_t node_addr, const char* name);
+
+    /// @brief Sets a vendor-specific parameter on a node.
+    /// @param node_addr The address of the target node.
+    /// @param name The name of the parameter to set.
+    /// @param value The value to set for the parameter.
+    void vendorSet(uint8_t node_addr, const char* name, const char* value);
+
+    /// @brief Registers a callback function to be called when vendor data is received.
+    /// @param callback The function to be called.
+    void onVendorData(VendorDataCallback callback);
+
     // --- Accessory Control Functions ---
 
     /// @brief Sets the state (aspect) of a native BiDiB accessory.
@@ -402,6 +450,8 @@ protected:
     PomAckCallback _pomAckCallback;
     BoosterStatusCallback _boosterStatusCallback;
     BoosterDiagnosticCallback _boosterDiagnosticCallback;
+    VendorAckCallback _vendorAckCallback;
+    VendorDataCallback _vendorDataCallback;
     OccupancyCallback _occupancyCallback;
     OccupancyMultipleCallback _occupancyMultipleCallback;
     AddressCallback _addressCallback;
