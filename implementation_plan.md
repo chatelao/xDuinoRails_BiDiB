@@ -105,9 +105,9 @@ Vor jeder neuen Implementierung ist dieses Dokument zu konsultieren. Nach Abschl
 
 **Ziel:** Implementierung von speziellen Funktionen für Booster-Management und Wartung.
 
-- [ ] **6.1. Booster-Management:**
-    - [ ] Implementierung von `MSG_BOOST_ON` und `MSG_BOOST_OFF`.
-    - [ ] Verarbeitung von Status- (`MSG_BOOST_STAT`) und Diagnosemeldungen (`MSG_BOOST_DIAGNOSTIC`).
+- [x] **6.1. Booster-Management:**
+    - [x] Implementierung von `MSG_BOOST_ON` und `MSG_BOOST_OFF`.
+    - [x] Verarbeitung von Status- (`MSG_BOOST_STAT`) und Diagnosemeldungen (`MSG_BOOST_DIAGNOSTIC`).
 - [ ] **6.2. Firmware Update:**
     - [ ] Implementierung des kompletten Firmware-Update-Prozesses (`MSG_FW_UPDATE_OP`, `MSG_FW_UPDATE_STAT`).
 - [ ] **6.3. Hersteller-spezifische Konfiguration:**
