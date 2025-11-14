@@ -48,6 +48,8 @@ BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false), _system_enabled(t
     _driveAckCallback = nullptr;
     _accessoryAckCallback = nullptr;
     _pomAckCallback = nullptr;
+    _boosterStatusCallback = nullptr;
+    _boosterDiagnosticCallback = nullptr;
     _occupancyCallback = nullptr;
     _occupancyMultipleCallback = nullptr;
     _addressCallback = nullptr;
@@ -129,6 +131,38 @@ void BiDiB::setTrackState(uint8_t state) {
     msg.msg_type = MSG_CS_SET_STATE;
     msg.data[0] = state;
     sendMessage(msg);
+}
+
+// =============================================================================
+// Booster Functions
+// =============================================================================
+
+void BiDiB::setBoosterState(bool on, uint8_t node_addr) {
+    BiDiBMessage msg;
+    msg.address[0] = node_addr;
+    msg.address[1] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = on ? MSG_BOOST_ON : MSG_BOOST_OFF;
+    msg.length = (node_addr == 0) ? 3 : 4;
+    sendMessage(msg);
+}
+
+void BiDiB::queryBooster(uint8_t node_addr) {
+    BiDiBMessage msg;
+    msg.address[0] = node_addr;
+    msg.address[1] = 0;
+    msg.length = (node_addr == 0) ? 3 : 4;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_BOOST_QUERY;
+    sendMessage(msg);
+}
+
+void BiDiB::onBoosterStatus(BoosterStatusCallback callback) {
+    _boosterStatusCallback = callback;
+}
+
+void BiDiB::onBoosterDiagnostic(BoosterDiagnosticCallback callback) {
+    _boosterDiagnosticCallback = callback;
 }
 
 // =============================================================================
@@ -583,6 +617,29 @@ void BiDiB::handleMessages() {
                 uint8_t accessoryNum = msg.data[0];
                 uint8_t aspect = msg.data[1];
                 _accessoryStateCallback(accessoryNum, aspect);
+            }
+            break;
+        }
+
+        // --- Booster Status ---
+        case MSG_BOOST_STAT: {
+            if (_boosterStatusCallback != nullptr) {
+                _boosterStatusCallback(msg.data[0]);
+            }
+            break;
+        }
+        case MSG_BOOST_DIAGNOSTIC: {
+            if (_boosterDiagnosticCallback != nullptr) {
+                int addr_len = 0;
+                for (int i=0; i<4; ++i) { if (msg.address[i] == 0) { addr_len = i + 1; break; } }
+                int data_len = msg.length - addr_len - 2;
+                int data_index = 0;
+                while (data_index < data_len) {
+                    uint8_t type = msg.data[data_index];
+                    uint16_t value = msg.data[data_index + 1] | (msg.data[data_index + 2] << 8);
+                    _boosterDiagnosticCallback(type, value);
+                    data_index += 3;
+                }
             }
             break;
         }

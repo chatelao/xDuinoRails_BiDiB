@@ -71,6 +71,13 @@ const uint8_t MSG_ACCESSORY_GET = 0x39;
 const uint8_t MSG_ACCESSORY_STATE = 0xB8;
 const uint8_t MSG_ACCESSORY_NOTIFY = 0xB9;
 
+// --- Booster Messages ---
+const uint8_t MSG_BOOST_ON = 0x50;
+const uint8_t MSG_BOOST_OFF = 0x51;
+const uint8_t MSG_BOOST_QUERY = 0x52;
+const uint8_t MSG_BOOST_STAT = 0xD0;
+const uint8_t MSG_BOOST_DIAGNOSTIC = 0xD1;
+
 
 // --- Command Station Constants ---
 const uint8_t BIDIB_CS_STATE_OFF = 0;  ///< Track voltage is off
@@ -82,6 +89,17 @@ const uint8_t BIDIB_CS_POM_RD_BLOCK = 0x00;
 const uint8_t BIDIB_CS_POM_RD_BYTE = 0x01;
 const uint8_t BIDIB_CS_POM_WR_BIT = 0x02;
 const uint8_t BIDIB_CS_POM_WR_BYTE = 0x03;
+
+// --- Booster Constants ---
+const uint8_t BIDIB_BST_STATE_OFF = 0x00;         ///< Booster is off (general)
+const uint8_t BIDIB_BST_STATE_OFF_SHORT = 0x01;  ///< Booster is off due to short circuit
+const uint8_t BIDIB_BST_STATE_OFF_OVERHEAT = 0x02;///< Booster is off due to overheating
+const uint8_t BIDIB_BST_STATE_ON = 0x80;         ///< Booster is on
+const uint8_t BIDIB_BST_STATE_ON_LIMIT = 0x81;   ///< Booster is on and in current-limiting mode
+
+const uint8_t BIDIB_BST_DIAG_CURRENT = 0x00;     ///< Diagnostic key for current
+const uint8_t BIDIB_BST_DIAG_VOLTAGE = 0x01;     ///< Diagnostic key for voltage
+const uint8_t BIDIB_BST_DIAG_TEMP = 0x02;        ///< Diagnostic key for temperature
 
 //================================================================================
 // BiDiB Data Structures
@@ -165,6 +183,15 @@ typedef void (*CvCallback)(uint16_t address, uint16_t cv, uint8_t value);
 /// @param accessoryNum The number of the accessory.
 /// @param aspect The current aspect (state) of the accessory.
 typedef void (*AccessoryStateCallback)(uint8_t accessoryNum, uint8_t aspect);
+
+/// @brief Callback function type for booster status reports.
+/// @param status The current status of the booster (see BIDIB_BST_STATE_* constants).
+typedef void (*BoosterStatusCallback)(uint8_t status);
+
+/// @brief Callback function type for booster diagnostic reports.
+/// @param type The type of diagnostic value (see BIDIB_BST_DIAG_* constants).
+/// @param value The diagnostic value.
+typedef void (*BoosterDiagnosticCallback)(uint8_t type, uint16_t value);
 
 
 //================================================================================
@@ -287,6 +314,25 @@ public:
     /// @param callback The function to be called.
     void onPomAck(PomAckCallback callback);
 
+    // --- Booster Functions ---
+
+    /// @brief Sets the state of a booster (on or off).
+    /// @param on True to turn the booster on, false to turn it off.
+    /// @param node_addr The address of the booster to control. Use 0 for a broadcast to all boosters.
+    void setBoosterState(bool on, uint8_t node_addr = 0);
+
+    /// @brief Queries the status and diagnostic values of a booster.
+    /// @param node_addr The address of the booster to query. Use 0 for a broadcast to all boosters.
+    void queryBooster(uint8_t node_addr = 0);
+
+    /// @brief Registers a callback function to be called when a booster status report is received.
+    /// @param callback The function to be called.
+    void onBoosterStatus(BoosterStatusCallback callback);
+
+    /// @brief Registers a callback function to be called when a booster diagnostic report is received.
+    /// @param callback The function to be called.
+    void onBoosterDiagnostic(BoosterDiagnosticCallback callback);
+
     // --- Accessory Control Functions ---
 
     /// @brief Sets the state (aspect) of a native BiDiB accessory.
@@ -354,6 +400,8 @@ protected:
     DriveAckCallback _driveAckCallback;
     AccessoryAckCallback _accessoryAckCallback;
     PomAckCallback _pomAckCallback;
+    BoosterStatusCallback _boosterStatusCallback;
+    BoosterDiagnosticCallback _boosterDiagnosticCallback;
     OccupancyCallback _occupancyCallback;
     OccupancyMultipleCallback _occupancyMultipleCallback;
     AddressCallback _addressCallback;
