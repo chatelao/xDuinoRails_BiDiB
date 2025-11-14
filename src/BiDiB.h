@@ -78,6 +78,10 @@ const uint8_t MSG_BOOST_QUERY = 0x52;
 const uint8_t MSG_BOOST_STAT = 0xD0;
 const uint8_t MSG_BOOST_DIAGNOSTIC = 0xD1;
 
+// --- Firmware Update Messages ---
+const uint8_t MSG_FW_UPDATE_OP = 0x10;
+const uint8_t MSG_FW_UPDATE_STAT = 0x90;
+
 
 // --- Command Station Constants ---
 const uint8_t BIDIB_CS_STATE_OFF = 0;  ///< Track voltage is off
@@ -100,6 +104,18 @@ const uint8_t BIDIB_BST_STATE_ON_LIMIT = 0x81;   ///< Booster is on and in curre
 const uint8_t BIDIB_BST_DIAG_CURRENT = 0x00;     ///< Diagnostic key for current
 const uint8_t BIDIB_BST_DIAG_VOLTAGE = 0x01;     ///< Diagnostic key for voltage
 const uint8_t BIDIB_BST_DIAG_TEMP = 0x02;        ///< Diagnostic key for temperature
+
+// --- Firmware Update Opcodes & Status ---
+const uint8_t BIDIB_MSG_FW_UPDATE_OP_ENTER = 0x00;    ///< Enter update mode
+const uint8_t BIDIB_MSG_FW_UPDATE_OP_EXIT = 0x01;     ///< Exit update mode
+const uint8_t BIDIB_MSG_FW_UPDATE_OP_SETDEST = 0x02;  ///< Set destination memory
+const uint8_t BIDIB_MSG_FW_UPDATE_OP_DATA = 0x03;     ///< Transmit firmware data
+const uint8_t BIDIB_MSG_FW_UPDATE_OP_DONE = 0x04;     ///< Signal end of data transmission
+
+const uint8_t BIDIB_MSG_FW_UPDATE_STAT_READY = 0x00;  ///< Node is ready for update
+const uint8_t BIDIB_MSG_FW_UPDATE_STAT_EXIT = 0x01;   ///< Node is exiting update mode
+const uint8_t BIDIB_MSG_FW_UPDATE_STAT_DATA = 0x02;   ///< Node is expecting data
+const uint8_t BIDIB_MSG_FW_UPDATE_STAT_ERROR = 255;   ///< An error occurred
 
 //================================================================================
 // BiDiB Data Structures
@@ -192,6 +208,10 @@ typedef void (*BoosterStatusCallback)(uint8_t status);
 /// @param type The type of diagnostic value (see BIDIB_BST_DIAG_* constants).
 /// @param value The diagnostic value.
 typedef void (*BoosterDiagnosticCallback)(uint8_t type, uint16_t value);
+
+/// @brief Callback function type for firmware update status reports.
+/// @param status The status of the firmware update process (see BIDIB_MSG_FW_UPDATE_STAT_* constants).
+typedef void (*FirmwareUpdateStatusCallback)(uint8_t status);
 
 
 //================================================================================
@@ -333,6 +353,36 @@ public:
     /// @param callback The function to be called.
     void onBoosterDiagnostic(BoosterDiagnosticCallback callback);
 
+    // --- Firmware Update Functions ---
+
+    /// @brief Enters firmware update mode on a specific node.
+    /// @param node_addr The address of the node.
+    /// @param unique_id The 7-byte unique ID of the node.
+    void enterFirmwareUpdateMode(uint8_t node_addr, const uint8_t* unique_id);
+
+    /// @brief Exits firmware update mode on a specific node.
+    /// @param node_addr The address of the node.
+    void exitFirmwareUpdateMode(uint8_t node_addr);
+
+    /// @brief Sets the destination memory for the firmware update.
+    /// @param node_addr The address of the node.
+    /// @param destination The destination memory (e.g., 0 for Flash).
+    void setFirmwareUpdateDestination(uint8_t node_addr, uint8_t destination);
+
+    /// @brief Sends a block of firmware data.
+    /// @param node_addr The address of the node.
+    /// @param data A pointer to the data to send.
+    /// @param size The size of the data block.
+    void sendFirmwareData(uint8_t node_addr, const uint8_t* data, uint8_t size);
+
+    /// @brief Signals that the firmware update data transmission is complete.
+    /// @param node_addr The address of the node.
+    void signalFirmwareUpdateDone(uint8_t node_addr);
+
+    /// @brief Registers a callback function to be called when a firmware update status report is received.
+    /// @param callback The function to be called.
+    void onFirmwareUpdateStatus(FirmwareUpdateStatusCallback callback);
+
     // --- Accessory Control Functions ---
 
     /// @brief Sets the state (aspect) of a native BiDiB accessory.
@@ -402,6 +452,7 @@ protected:
     PomAckCallback _pomAckCallback;
     BoosterStatusCallback _boosterStatusCallback;
     BoosterDiagnosticCallback _boosterDiagnosticCallback;
+    FirmwareUpdateStatusCallback _firmwareUpdateStatusCallback;
     OccupancyCallback _occupancyCallback;
     OccupancyMultipleCallback _occupancyMultipleCallback;
     AddressCallback _addressCallback;

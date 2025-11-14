@@ -50,6 +50,7 @@ BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false), _system_enabled(t
     _pomAckCallback = nullptr;
     _boosterStatusCallback = nullptr;
     _boosterDiagnosticCallback = nullptr;
+    _firmwareUpdateStatusCallback = nullptr;
     _occupancyCallback = nullptr;
     _occupancyMultipleCallback = nullptr;
     _addressCallback = nullptr;
@@ -163,6 +164,72 @@ void BiDiB::onBoosterStatus(BoosterStatusCallback callback) {
 
 void BiDiB::onBoosterDiagnostic(BoosterDiagnosticCallback callback) {
     _boosterDiagnosticCallback = callback;
+}
+
+// =============================================================================
+// Firmware Update Functions
+// =============================================================================
+
+void BiDiB::enterFirmwareUpdateMode(uint8_t node_addr, const uint8_t* unique_id) {
+    BiDiBMessage msg;
+    msg.length = 12;
+    msg.address[0] = node_addr;
+    msg.address[1] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_FW_UPDATE_OP;
+    msg.data[0] = BIDIB_MSG_FW_UPDATE_OP_ENTER;
+    memcpy(&msg.data[1], unique_id, 7);
+    sendMessage(msg);
+}
+
+void BiDiB::exitFirmwareUpdateMode(uint8_t node_addr) {
+    BiDiBMessage msg;
+    msg.length = 5;
+    msg.address[0] = node_addr;
+    msg.address[1] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_FW_UPDATE_OP;
+    msg.data[0] = BIDIB_MSG_FW_UPDATE_OP_EXIT;
+    sendMessage(msg);
+}
+
+void BiDiB::setFirmwareUpdateDestination(uint8_t node_addr, uint8_t destination) {
+    BiDiBMessage msg;
+    msg.length = 6;
+    msg.address[0] = node_addr;
+    msg.address[1] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_FW_UPDATE_OP;
+    msg.data[0] = BIDIB_MSG_FW_UPDATE_OP_SETDEST;
+    msg.data[1] = destination;
+    sendMessage(msg);
+}
+
+void BiDiB::sendFirmwareData(uint8_t node_addr, const uint8_t* data, uint8_t size) {
+    BiDiBMessage msg;
+    msg.length = 5 + size;
+    msg.address[0] = node_addr;
+    msg.address[1] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_FW_UPDATE_OP;
+    msg.data[0] = BIDIB_MSG_FW_UPDATE_OP_DATA;
+    memcpy(&msg.data[1], data, size);
+    sendMessage(msg);
+}
+
+void BiDiB::signalFirmwareUpdateDone(uint8_t node_addr) {
+    BiDiBMessage msg;
+    msg.length = 5;
+    msg.address[0] = node_addr;
+    msg.address[1] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_FW_UPDATE_OP;
+    msg.data[0] = BIDIB_MSG_FW_UPDATE_OP_DONE;
+    sendMessage(msg);
+}
+
+void BiDiB::onFirmwareUpdateStatus(FirmwareUpdateStatusCallback callback) {
+    _firmwareUpdateStatusCallback = callback;
 }
 
 // =============================================================================
