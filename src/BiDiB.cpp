@@ -54,6 +54,7 @@ BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false), _system_enabled(t
     _occupancyMultipleCallback = nullptr;
     _addressCallback = nullptr;
     _accessoryStateCallback = nullptr;
+    _firmwareUpdateStatusCallback = nullptr;
 
     // Initialize the pending Secure-ACKs list.
     for (int i = 0; i < MAX_PENDING_SECURE_ACKS; ++i) {
@@ -222,6 +223,28 @@ void BiDiB::vendorSet(uint8_t node_addr, const char* name, const char* value) {
 
 void BiDiB::onVendorData(VendorDataCallback callback) {
     _vendorDataCallback = callback;
+}
+
+// =============================================================================
+// Firmware Update Functions
+// =============================================================================
+
+void BiDiB::firmwareUpdateOperation(uint8_t node_addr, uint8_t op, const uint8_t* data, size_t len) {
+    BiDiBMessage msg;
+    msg.address[0] = node_addr;
+    msg.address[1] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_FW_UPDATE_OP;
+    msg.data[0] = op;
+    if (data != nullptr && len > 0) {
+        memcpy(&msg.data[1], data, len);
+    }
+    msg.length = 5 + len;
+    sendMessage(msg);
+}
+
+void BiDiB::onFirmwareUpdateStatus(FirmwareUpdateStatusCallback callback) {
+    _firmwareUpdateStatusCallback = callback;
 }
 
 // =============================================================================
@@ -720,6 +743,16 @@ void BiDiB::handleMessages() {
                     _boosterDiagnosticCallback(type, value);
                     data_index += 3;
                 }
+            }
+            break;
+        }
+
+        // --- Firmware Update ---
+        case MSG_FW_UPDATE_STAT: {
+            if (_firmwareUpdateStatusCallback != nullptr) {
+                uint8_t status = msg.data[0];
+                uint8_t detail = (msg.length > 4) ? msg.data[1] : 0;
+                _firmwareUpdateStatusCallback(status, detail);
             }
             break;
         }
