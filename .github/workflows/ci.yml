@@ -18,3 +18,5 @@ jobs:
         pip install -U platformio
     - name: Build with PlatformIO
       run: pio run
+    - name: Run Unit Tests
+      run: python -m platformio test -e native
