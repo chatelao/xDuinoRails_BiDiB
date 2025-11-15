@@ -151,6 +151,26 @@ void setup() {
   // Die Callback-Funktionen registrieren
   bidib.onOccupancy(handleOccupancy);
   bidib.onAddress(handleAddress);
+  bidib.onSpeedUpdate(handleSpeed);
+  bidib.onCvUpdate(handleCv);
+}
+
+// Callback für Geschwindigkeitsmeldungen
+void handleSpeed(uint16_t address, uint16_t speed) {
+  Serial.print("Lok mit Adresse ");
+  Serial.print(address);
+  Serial.print(" meldet Geschwindigkeit: ");
+  Serial.println(speed);
+}
+
+// Callback für CV-Rückmeldungen
+void handleCv(uint16_t address, uint16_t cv, uint8_t value) {
+  Serial.print("Lok mit Adresse ");
+  Serial.print(address);
+  Serial.print(" meldet CV ");
+  Serial.print(cv);
+  Serial.print(" = ");
+  Serial.println(value);
 }
 
 void loop() {
@@ -218,3 +238,81 @@ void loop() {
 -   `onAccessoryState(callback)`: Registriert eine Funktion zur Behandlung von Zustandsmeldungen von nativem BiDiB-Zubehör.
 -   `onBoosterStatus(callback)`: Registriert eine Funktion zur Behandlung von Booster-Statusmeldungen.
 -   `onBoosterDiagnostic(callback)`: Registriert eine Funktion zur Behandlung von Booster-Diagnosemeldungen.
+-   `onSpeedUpdate(callback)`: Registriert eine Funktion zur Behandlung von Geschwindigkeitsmeldungen von Meldern.
+-   `onCvUpdate(callback)`: Registriert eine Funktion zur Behandlung von CV-Meldungen von Meldern.
+-   `onFirmwareUpdateStatus(callback)`: Registriert eine Funktion zur Behandlung von Firmware-Update-Statusmeldungen.
+-   `onVendorAck(callback)`: Registriert eine Funktion zur Behandlung von Vendor-Quittungen.
+-   `onVendorData(callback)`: Registriert eine Funktion zur Behandlung von Vendor-Datenmeldungen.
+
+## Firmware-Update durchführen
+
+Die Bibliothek unterstützt die Durchführung eines Firmware-Updates für einen Knoten auf dem Bus. Dies ist ein fortgeschrittener Anwendungsfall.
+
+```cpp
+// Diese Funktion wird aufgerufen, um den Update-Status zu überwachen
+void handleFwUpdateStatus(uint8_t status_code, uint8_t detail) {
+  Serial.print("Firmware-Update-Status: ");
+  Serial.print(status_code);
+  Serial.print(" - Detail: ");
+  Serial.println(detail);
+}
+
+void setup() {
+  // ... (Setup-Code wie oben) ...
+  bidib.onFirmwareUpdateStatus(handleFwUpdateStatus);
+}
+
+void performFirmwareUpdate(uint8_t targetNodeAddress) {
+  // Schritt 1: Update-Modus für den Zielknoten starten
+  bidib.enterFirmwareUpdateMode(targetNodeAddress);
+  delay(100); // Warten, bis der Knoten bereit ist
+
+  // Schritt 2: Firmware-Daten in Blöcken senden
+  // (Dies ist eine vereinfachte Darstellung)
+  const uint8_t firmware_data[] = { 0xDE, 0xAD, 0xBE, 0xEF };
+  bidib.sendFirmwareUpdateData(targetNodeAddress, firmware_data, sizeof(firmware_data));
+
+  // Schritt 3: Update beenden
+  bidib.signalFirmwareUpdateDone(targetNodeAddress);
+  delay(100);
+  bidib.exitFirmwareUpdateMode(targetNodeAddress);
+}
+```
+
+## Hersteller-spezifische Konfiguration
+
+BiDiB ermöglicht die Kommunikation mit herstellerspezifischen Konfigurations- oder Befehlsnachrichten.
+
+```cpp
+// Callback für eingehende Vendor-Antworten
+void handleVendorData(uint8_t node_addr, const char* name, const char* value) {
+  Serial.print("Hersteller-Daten von Knoten ");
+  Serial.print(node_addr);
+  Serial.print(": ");
+  Serial.print(name);
+  Serial.print(" = ");
+  Serial.println(value);
+}
+
+void setup() {
+  // ... (Setup-Code wie oben) ...
+  bidib.onVendorData(handleVendorData);
+}
+
+void queryVendorSetting(uint8_t targetNode) {
+  // Vendor-Modus aktivieren
+  bidib.vendorEnable(targetNode);
+  delay(50);
+
+  // Einen Wert abfragen
+  bidib.vendorGet(targetNode, "brightness");
+  delay(50);
+
+  // Einen Wert setzen
+  bidib.vendorSet(targetNode, "mode", "auto");
+  delay(50);
+
+  // Vendor-Modus deaktivieren
+  bidib.vendorDisable(targetNode);
+}
+```
