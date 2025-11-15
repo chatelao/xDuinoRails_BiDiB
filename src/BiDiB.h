@@ -411,6 +411,29 @@ public:
     /// @param len The length of the data payload.
     void firmwareUpdateOperation(uint8_t node_addr, uint8_t op, const uint8_t* data = nullptr, size_t len = 0);
 
+    /// @brief Instructs a node to enter firmware update mode.
+    /// @param node_addr The address of the target node.
+    void enterFirmwareUpdateMode(uint8_t node_addr);
+
+    /// @brief Instructs a node to exit firmware update mode and restart.
+    /// @param node_addr The address of the target node.
+    void exitFirmwareUpdateMode(uint8_t node_addr);
+
+    /// @brief Sets the destination memory area for the firmware update.
+    /// @param node_addr The address of the target node.
+    /// @param destination The destination memory (e.g., 0 for Flash, 1 for EEPROM).
+    void setFirmwareUpdateDestination(uint8_t node_addr, uint8_t destination);
+
+    /// @brief Sends a line of firmware data to the node.
+    /// @param node_addr The address of the target node.
+    /// @param data A pointer to the data to send.
+    /// @param len The length of the data.
+    void sendFirmwareUpdateData(uint8_t node_addr, const uint8_t* data, size_t len);
+
+    /// @brief Signals the end of data transmission for the current memory destination.
+    /// @param node_addr The address of the target node.
+    void signalFirmwareUpdateDone(uint8_t node_addr);
+
     /// @brief Registers a callback function to be called when a firmware update status report is received.
     /// @param callback The function to be called.
     void onFirmwareUpdateStatus(FirmwareUpdateStatusCallback callback);
@@ -475,8 +498,10 @@ protected:
     uint8_t _feature_count;
     uint8_t _next_feature_index;
     BiDiBNode _local_node;
+public:
     BiDiBNode _node_table[BIDIB_MAX_NODES];
     uint8_t _node_count;
+protected:
     bool _isLoggedIn;
     uint8_t _track_state;
     DriveAckCallback _driveAckCallback;
