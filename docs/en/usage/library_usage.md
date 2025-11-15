@@ -93,6 +93,105 @@ void loop() {
 }
 ```
 
+## Controlling DCC Accessories
+
+You can also control DCC accessories like turnouts or signals connected to an accessory decoder on the track.
+
+```cpp
+// This function will be called when an accessory ACK is received
+void handleAccessoryAck(uint16_t address, uint8_t status) {
+  Serial.print("Accessory ACK for address ");
+  Serial.println(address);
+}
+
+void setup() {
+  // ... (setup code as above) ...
+  bidib.onAccessoryAck(handleAccessoryAck);
+}
+
+void loop() {
+  // ... (update loop as above) ...
+
+  if (bidib.isLoggedIn()) {
+    // Switch turnout with address 10 to the 'on' state (e.g., thrown)
+    bidib.accessory(10, 0, 1);
+    delay(2000);
+
+    // Switch it back to the 'off' state (e.g., straight)
+    bidib.accessory(10, 0, 0);
+    delay(2000);
+  }
+}
+```
+
+## Receiving Occupancy Feedback
+
+The library can receive feedback from occupancy detectors and other sensors on the bus using callback functions.
+
+```cpp
+// Callback for single occupancy events
+void handleOccupancy(uint8_t detectorNum, bool occupied) {
+  Serial.print("Detector ");
+  Serial.print(detectorNum);
+  Serial.println(occupied ? " is occupied." : " is free.");
+}
+
+// Callback for locomotive address reports (e.g., from a Railcom detector)
+void handleAddress(uint8_t detectorNum, uint16_t address) {
+  Serial.print("Loco with address ");
+  Serial.print(address);
+  Serial.print(" detected at detector ");
+  Serial.println(detectorNum);
+}
+
+void setup() {
+  // ... (setup code as above) ...
+
+  // Register the callback functions
+  bidib.onOccupancy(handleOccupancy);
+  bidib.onAddress(handleAddress);
+}
+
+void loop() {
+  // The update loop will automatically trigger the callbacks when messages are received
+  bidib.update();
+  if (bidib.messageAvailable()) {
+    bidib.handleMessages();
+  }
+}
+```
+
+## Managing Boosters
+
+You can control and monitor BiDiB-enabled boosters.
+
+```cpp
+// Callback for booster status messages
+void handleBoosterStatus(uint8_t status) {
+  Serial.print("Booster status changed: ");
+  Serial.println(status);
+}
+
+void setup() {
+  // ... (setup code as above) ...
+  bidib.onBoosterStatus(handleBoosterStatus);
+}
+
+void loop() {
+  // ... (update loop as above) ...
+
+  if (bidib.isLoggedIn()) {
+    // Turn all boosters on (broadcast to address 0)
+    bidib.setBoosterState(true, 0);
+    delay(10000);
+
+    // Turn all boosters off
+    bidib.setBoosterState(false, 0);
+    delay(10000);
+  }
+}
+```
+
 ## Key Functions
 
 -   `begin(Stream &serial)`: Initializes the library with a serial interface.
@@ -101,3 +200,20 @@ void loop() {
 -   `isLoggedIn()`: Returns `true` if the node has successfully logged on to the BiDiB bus.
 -   `setTrackState(uint8_t state)`: Sets the track power state (`BIDIB_CS_STATE_OFF`, `BIDIB_CS_STATE_STOP`, `BIDIB_CS_STATE_GO`).
 -   `drive(uint16_t address, int8_t speed, uint8_t functions)`: Sends a drive command to a locomotive.
+-   `accessory(uint16_t address, uint8_t output, uint8_t state)`: Sends a command to a DCC accessory.
+-   `pomWriteByte(uint16_t address, uint16_t cv, uint8_t value)`: Writes a CV value on the main track (PoM).
+-   `setBoosterState(bool on, uint8_t node_addr)`: Turns a booster on or off.
+-   `queryBooster(uint8_t node_addr)`: Requests the status of a booster.
+-   `setAccessory(uint8_t accessoryNum, uint8_t aspect)`: Sets the state of a native BiDiB accessory.
+-   `getAccessory(uint8_t accessoryNum)`: Requests the state of a native BiDiB accessory.
+
+### Callback Registration Functions
+
+-   `onDriveAck(callback)`: Registers a function to handle drive command acknowledgements.
+-   `onAccessoryAck(callback)`: Registers a function to handle DCC accessory acknowledgements.
+-   `onPomAck(callback)`: Registers a function to handle PoM write acknowledgements.
+-   `onOccupancy(callback)`: Registers a function to handle occupancy reports (`occupied`/`free`).
+-   `onAddress(callback)`: Registers a function to handle address reports from detectors.
+-   `onAccessoryState(callback)`: Registers a function to handle state reports from native BiDiB accessories.
+-   `onBoosterStatus(callback)`: Registers a function to handle booster status reports.
+-   `onBoosterDiagnostic(callback)`: Registers a function to handle booster diagnostic reports.
