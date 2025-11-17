@@ -40,21 +40,21 @@ void test_send_enable(void) {
     TEST_ASSERT_EQUAL(0, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(0, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(MSG_SYS_ENABLE, mockSerial.read_outgoing());
-    TEST_ASSERT_EQUAL(108, mockSerial.read_outgoing()); // CRC
+    TEST_ASSERT_EQUAL(88, mockSerial.read_outgoing()); // CRC
     TEST_ASSERT_EQUAL(BIDIB_MAGIC, mockSerial.read_outgoing());
 }
 
 void test_send_disable(void) {
     bidib.disable();
 
-    // FE 03 00 00 05 50 FE
+    // FE 03 00 00 05 69 FE
     TEST_ASSERT_EQUAL(7, mockSerial.available_outgoing());
     TEST_ASSERT_EQUAL(BIDIB_MAGIC, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(3, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(0, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(0, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(MSG_SYS_DISABLE, mockSerial.read_outgoing());
-    TEST_ASSERT_EQUAL(50, mockSerial.read_outgoing()); // CRC
+    TEST_ASSERT_EQUAL(105, mockSerial.read_outgoing()); // CRC
     TEST_ASSERT_EQUAL(BIDIB_MAGIC, mockSerial.read_outgoing());
 }
 
