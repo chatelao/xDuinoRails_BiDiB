@@ -23,3 +23,9 @@ Vor jeder Umsetzung ist das `implementation_plan.md` zu lesen. Nach der Umsetzun
 
 - **Comprehensive Testing:** For every new function, both unit tests and end-to-end transmit/receive (TX/RX) tests must be written. This ensures that each component works correctly in isolation and integrates properly within the overall communication flow.
 - **Umfassende Tests (DE):** Für jede neue Funktion müssen sowohl Unit-Tests als auch End-to-End-Sende/Empfangs-Tests (TX/RX) geschrieben werden. Dadurch wird sichergestellt, dass jede Komponente isoliert korrekt funktioniert und sich ordnungsgemäß in den gesamten Kommunikationsfluss integriert.
+
+## Code Formatting
+
+- **Constant Alignment:** When defining multiple constants in a row, the `=` signs should be aligned for readability.
+
+- **Konstantenausrichtung (DE):** Bei der Definition von mehreren Konstanten hintereinander sollen die `=` Zeichen zur besseren Lesbarkeit ausgerichtet werden.
