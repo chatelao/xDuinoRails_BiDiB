@@ -23,3 +23,9 @@ Vor jeder Umsetzung ist das `implementation_plan.md` zu lesen. Nach der Umsetzun
 
 - **Comprehensive Testing:** For every new function, both unit tests and end-to-end transmit/receive (TX/RX) tests must be written. This ensures that each component works correctly in isolation and integrates properly within the overall communication flow.
 - **Umfassende Tests (DE):** Für jede neue Funktion müssen sowohl Unit-Tests als auch End-to-End-Sende/Empfangs-Tests (TX/RX) geschrieben werden. Dadurch wird sichergestellt, dass jede Komponente isoliert korrekt funktioniert und sich ordnungsgemäß in den gesamten Kommunikationsfluss integriert.
+
+## Code Formatting
+
+- **Constant Alignment:** When defining multiple constants in a row, the `=` signs should be vertically aligned. Additionally, the numeric values should be right-aligned based on the widest value in the block. The original numeric base (e.g., decimal, hexadecimal) of all values must be preserved.
+
+- **Konstantenausrichtung (DE):** Bei der Definition von mehreren Konstanten hintereinander sollen die `=` Zeichen vertikal ausgerichtet werden. Zusätzlich sollen die numerischen Werte rechtsbündig am breitesten Wert im Block ausgerichtet werden. Die ursprüngliche numerische Basis (z.B. dezimal, hexadezimal) aller Werte muss erhalten bleiben.
