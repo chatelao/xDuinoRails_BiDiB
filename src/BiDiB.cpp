@@ -41,6 +41,10 @@ BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false), _system_enabled(t
     for (int i = 0; i < MAX_PENDING_SECURE_ACKS; ++i) {
         _pendingSecureAcks[i].active = false;
     }
+
+    // Initialize receiver FSM state
+    _rx_state = FSM_IDLE;
+    _rx_ptr = 0;
 }
 
 // =============================================================================
@@ -883,49 +887,90 @@ void BiDiB::sendMessage(const BiDiBMessage& msg) {
     bidib_serial->write(BIDIB_MAGIC);
 }
 
+bool BiDiB::processByte(uint8_t b) {
+    switch (_rx_state)
+    {
+    case FSM_IDLE:
+        if (b == BIDIB_MAGIC)
+        {
+            _rx_ptr = 0;
+            _rx_state = FSM_IN_MSG;
+        }
+        break;
+
+    case FSM_IN_MSG:
+        if (b == BIDIB_ESCAPE)
+        {
+            _rx_state = FSM_IN_MSG_ESCAPED;
+        }
+        else if (b == BIDIB_MAGIC)
+        {
+            // End of message
+            if (_rx_ptr > 0)
+            {
+                uint8_t final_crc = 0;
+                for (int i = 0; i < _rx_ptr; ++i) {
+                    updateCrc(_rx_buffer[i], final_crc);
+                }
+
+                if (final_crc == 0)
+                {
+                    // CRC is valid, message is complete
+                    _rx_state = FSM_IDLE;
+                    return true;
+                }
+            }
+            // Invalid message or framing error, reset and start looking for next MAGIC
+            _rx_ptr = 0;
+            _rx_state = FSM_IDLE;
+        }
+        else
+        {
+            _rx_buffer[_rx_ptr++] = b;
+        }
+        break;
+
+    case FSM_IN_MSG_ESCAPED:
+        _rx_buffer[_rx_ptr++] = b ^ 0x20;
+        _rx_state = FSM_IN_MSG;
+        break;
+    }
+    return false;
+}
+
 bool BiDiB::receiveMessage(BiDiBMessage& msg) {
-    if (bidib_serial->read() != BIDIB_MAGIC) { return false; }
+    if (!bidib_serial) { return false; }
 
-    uint8_t crc = 0;
+    while (bidib_serial->available() > 0) {
+        if (processByte(bidib_serial->read())) {
+            // A full message has been received in _rx_buffer. Now parse it.
+            msg.length = _rx_buffer[0];
 
-    // Helper lambda to read a byte from the serial stream and handle escaping.
-    auto readContentByte = [&]() {
-        uint8_t byte = bidib_serial->read();
-        if (byte == BIDIB_ESCAPE) { byte = bidib_serial->read() ^ 0x20; }
-        return byte;
-    };
+            // The total content between MAGICs is in _rx_buffer, which includes:
+            // [Length] [Address...] [MsgNum] [MsgType] [Data...] [CRC]
+            // The length byte itself tells us the length of the part after it, up to (but not including) the CRC.
 
-    msg.length = readContentByte();
-    updateCrc(msg.length, crc);
+            int addr_len = 0;
+            for (int i = 0; i < 4; ++i) {
+                addr_len++;
+                if (_rx_buffer[1 + i] == 0) break;
+            }
+            memcpy(msg.address, &_rx_buffer[1], addr_len);
 
-    // Read address, message number, and type
-    uint8_t addr_len = 0;
-    for (int i = 0; i < 4; ++i) {
-        msg.address[i] = readContentByte();
-        updateCrc(msg.address[i], crc);
-        addr_len++;
-        if (msg.address[i] == 0) break;
+            int current_pos = 1 + addr_len;
+            msg.msg_num = _rx_buffer[current_pos++];
+            msg.msg_type = _rx_buffer[current_pos++];
+
+            // Data length is the total payload length (from length byte) minus what we've already parsed.
+            int data_len = msg.length - (addr_len + 1 + 1);
+            if (data_len > 0) {
+                memcpy(msg.data, &_rx_buffer[current_pos], data_len);
+            }
+
+            return true;
+        }
     }
-    msg.msg_num = readContentByte();
-    updateCrc(msg.msg_num, crc);
-    msg.msg_type = readContentByte();
-    updateCrc(msg.msg_type, crc);
-
-    // Read data payload
-    uint8_t data_len = msg.length - addr_len - 2;
-    for (int i = 0; i < data_len; ++i) {
-        msg.data[i] = readContentByte();
-        updateCrc(msg.data[i], crc);
-    }
-
-    // Read and verify the CRC
-    uint8_t received_crc = bidib_serial->read();
-    if (received_crc == BIDIB_ESCAPE) { received_crc = bidib_serial->read() ^ 0x20; }
-    updateCrc(received_crc, crc); // The CRC of the full message (including CRC byte) must be 0
-
-    if (bidib_serial->read() != BIDIB_MAGIC) { return false; }
-
-    return crc == 0;
+    return false;
 }
 
 // =============================================================================

@@ -268,7 +268,7 @@ public:
     void begin(Stream &serial);
 
     /// @brief Processes incoming data from the serial port. This must be called regularly in the main loop.
-    void update();
+    virtual void update();
 
     /// @brief Handles the last fully received message.
     void handleMessages();
@@ -519,12 +519,24 @@ protected:
     AccessoryStateCallback _accessoryStateCallback;
     FirmwareUpdateStatusCallback _firmwareUpdateStatusCallback;
 
-private:
+protected:
+    // Receive buffer state
+    enum FSM_STATE { FSM_IDLE, FSM_IN_MSG, FSM_IN_MSG_ESCAPED };
+    FSM_STATE _rx_state;
+    uint8_t _rx_buffer[256];
+    uint8_t _rx_ptr;
+
     /// @brief Receives and validates an incoming BiDiB message from the serial stream.
     /// @param msg A reference to a BiDiBMessage object to store the received message.
     /// @return True if a complete and valid message was received, false otherwise.
-    bool receiveMessage(BiDiBMessage &msg);
+    virtual bool receiveMessage(BiDiBMessage &msg);
 
+    /// @brief Processes a single byte from the serial stream for message assembly.
+    /// @param b The byte to process.
+    /// @return True if a complete message has been assembled, false otherwise.
+    virtual bool processByte(uint8_t b);
+
+private:
     /// @brief Finds a node in the internal node table by its unique ID.
     /// @param unique_id A pointer to the 7-byte unique ID of the node to find.
     /// @return The index of the node in the table, or -1 if not found.
@@ -544,7 +556,9 @@ private:
     /// @param msg The message to add.
     void addPendingSecureAck(const BiDiBMessage &msg);
 
+protected:
     Stream *bidib_serial;
+private:
     uint8_t protocol_version[2] = {0, 1}; // V 0.1
 
     PendingSecureAck _pendingSecureAcks[MAX_PENDING_SECURE_ACKS];
