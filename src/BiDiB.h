@@ -7,122 +7,122 @@
 // BiDiB Protocol Constants
 //================================================================================
 
-const uint8_t BIDIB_MAGIC = 0xFE;  ///< Start and end of a BiDiB message
-const uint8_t BIDIB_ESCAPE = 0xFD; ///< Escape character for MAGIC byte
+const uint8_t BIDIB_MAGIC           = 0xFE;  ///< Start and end of a BiDiB message
+const uint8_t BIDIB_ESCAPE          = 0xFD; ///< Escape character for MAGIC byte
 
 //================================================================================
 // BiDiB Message Types
 //================================================================================
 
 // --- System Messages ---
-const uint8_t BIDIB_MAX_NODES = 32;
-const uint8_t MSG_SYS_GET_MAGIC = 1;
-const uint8_t MSG_SYS_GET_P_VERSION = 2;
-const uint8_t MSG_SYS_GET_UNIQUE_ID = 3;
-const uint8_t MSG_SYS_ENABLE = 4;
-const uint8_t MSG_SYS_DISABLE = 5;
-const uint8_t MSG_NODETAB_GETALL = 6;
-const uint8_t MSG_NODETAB_GETNEXT = 7;
-const uint8_t MSG_LOGON = 10;
-const uint8_t MSG_SYS_MAGIC = 0x81;
-const uint8_t MSG_SYS_P_VERSION = 0x82;
-const uint8_t MSG_SYS_UNIQUE_ID = 0x83;
-const uint8_t MSG_NODETAB_COUNT = 0x86;
-const uint8_t MSG_NODETAB = 0x87;
-const uint8_t MSG_NODE_NA = 0x88;
-const uint8_t MSG_NODE_NEW = 0x89;
-const uint8_t MSG_NODE_LOST = 0x8A;
-const uint8_t MSG_LOGON_ACK = 0x8B;
+const uint8_t BIDIB_MAX_NODES         =   32;
+const uint8_t MSG_SYS_GET_MAGIC       =    1;
+const uint8_t MSG_SYS_GET_P_VERSION   =    2;
+const uint8_t MSG_SYS_GET_UNIQUE_ID   =    3;
+const uint8_t MSG_SYS_ENABLE          =    4;
+const uint8_t MSG_SYS_DISABLE         =    5;
+const uint8_t MSG_NODETAB_GETALL      =    6;
+const uint8_t MSG_NODETAB_GETNEXT     =    7;
+const uint8_t MSG_LOGON               =   10;
+const uint8_t MSG_SYS_MAGIC           = 0x81;
+const uint8_t MSG_SYS_P_VERSION       = 0x82;
+const uint8_t MSG_SYS_UNIQUE_ID       = 0x83;
+const uint8_t MSG_NODETAB_COUNT       = 0x86;
+const uint8_t MSG_NODETAB             = 0x87;
+const uint8_t MSG_NODE_NA             = 0x88;
+const uint8_t MSG_NODE_NEW            = 0x89;
+const uint8_t MSG_NODE_LOST           = 0x8A;
+const uint8_t MSG_LOGON_ACK           = 0x8B;
 
 // --- Feature Messages ---
-const uint8_t MSG_FEATURE_GETALL = 11;
-const uint8_t MSG_FEATURE_GETNEXT = 12;
-const uint8_t MSG_FEATURE_GET = 13;
-const uint8_t MSG_FEATURE_SET = 14;
-const uint8_t MSG_FEATURE_COUNT = 0x8C;
-const uint8_t MSG_FEATURE = 0x8D;
-const uint8_t MSG_FEATURE_NA = 0x8E;
+const uint8_t MSG_FEATURE_GETALL      =   11;
+const uint8_t MSG_FEATURE_GETNEXT     =   12;
+const uint8_t MSG_FEATURE_GET         =   13;
+const uint8_t MSG_FEATURE_SET         =   14;
+const uint8_t MSG_FEATURE_COUNT       = 0x8C;
+const uint8_t MSG_FEATURE             = 0x8D;
+const uint8_t MSG_FEATURE_NA          = 0x8E;
 
 // --- Command Station Messages ---
-const uint8_t MSG_CS_SET_STATE = 0x48;
-const uint8_t MSG_CS_DRIVE = 0x40;
-const uint8_t MSG_CS_ACCESSORY = 0x42;
-const uint8_t MSG_CS_POM = 0x44;
-const uint8_t MSG_CS_DRIVE_ACK = 0xE0;
-const uint8_t MSG_CS_ACCESSORY_ACK = 0xE2;
-const uint8_t MSG_CS_POM_ACK = 0xE4;
-const uint8_t MSG_CS_STATE = 0xE9;
+const uint8_t MSG_CS_SET_STATE        = 0x48;
+const uint8_t MSG_CS_DRIVE            = 0x40;
+const uint8_t MSG_CS_ACCESSORY        = 0x42;
+const uint8_t MSG_CS_POM              = 0x44;
+const uint8_t MSG_CS_DRIVE_ACK        = 0xE0;
+const uint8_t MSG_CS_ACCESSORY_ACK    = 0xE2;
+const uint8_t MSG_CS_POM_ACK          = 0xE4;
+const uint8_t MSG_CS_STATE            = 0xE9;
 
 // --- Occupancy Messages ---
-const uint8_t MSG_BM_GET_RANGE = 0xA0;
-const uint8_t MSG_BM_MULTIPLE = 0xA1;
-const uint8_t MSG_BM_OCC = 0xA2;
-const uint8_t MSG_BM_FREE = 0xA3;
-const uint8_t MSG_BM_MIRROR_OCC = 0xA8;
-const uint8_t MSG_BM_MIRROR_FREE = 0xA9;
-const uint8_t MSG_BM_MIRROR_MULTIPLE = 0xAA;
-const uint8_t MSG_BM_ADDRESS = 0xA4;
-const uint8_t MSG_BM_SPEED = 0xA5;
-const uint8_t MSG_BM_CV = 0xA6;
+const uint8_t MSG_BM_GET_RANGE        = 0xA0;
+const uint8_t MSG_BM_MULTIPLE         = 0xA1;
+const uint8_t MSG_BM_OCC              = 0xA2;
+const uint8_t MSG_BM_FREE             = 0xA3;
+const uint8_t MSG_BM_MIRROR_OCC       = 0xA8;
+const uint8_t MSG_BM_MIRROR_FREE      = 0xA9;
+const uint8_t MSG_BM_MIRROR_MULTIPLE  = 0xAA;
+const uint8_t MSG_BM_ADDRESS          = 0xA4;
+const uint8_t MSG_BM_SPEED            = 0xA5;
+const uint8_t MSG_BM_CV               = 0xA6;
 
 // --- Accessory Control Messages ---
-const uint8_t MSG_ACCESSORY_SET = 0x38;
-const uint8_t MSG_ACCESSORY_GET = 0x39;
-const uint8_t MSG_ACCESSORY_STATE = 0xB8;
-const uint8_t MSG_ACCESSORY_NOTIFY = 0xB9;
+const uint8_t MSG_ACCESSORY_SET       = 0x38;
+const uint8_t MSG_ACCESSORY_GET       = 0x39;
+const uint8_t MSG_ACCESSORY_STATE     = 0xB8;
+const uint8_t MSG_ACCESSORY_NOTIFY    = 0xB9;
 
 // --- Booster Messages ---
-const uint8_t MSG_BOOST_ON = 0x50;
-const uint8_t MSG_BOOST_OFF = 0x51;
-const uint8_t MSG_BOOST_QUERY = 0x52;
-const uint8_t MSG_BOOST_STAT = 0xD0;
-const uint8_t MSG_BOOST_DIAGNOSTIC = 0xD1;
+const uint8_t MSG_BOOST_ON            = 0x50;
+const uint8_t MSG_BOOST_OFF           = 0x51;
+const uint8_t MSG_BOOST_QUERY         = 0x52;
+const uint8_t MSG_BOOST_STAT          = 0xD0;
+const uint8_t MSG_BOOST_DIAGNOSTIC    = 0xD1;
 
 // --- User Configuration Messages ---
-const uint8_t MSG_VENDOR_ENABLE = 0x70;
-const uint8_t MSG_VENDOR_DISABLE = 0x71;
-const uint8_t MSG_VENDOR_SET = 0x72;
-const uint8_t MSG_VENDOR_GET = 0x73;
-const uint8_t MSG_VENDOR = 0xF0;
-const uint8_t MSG_VENDOR_ACK = 0xF1;
+const uint8_t MSG_VENDOR_ENABLE       = 0x70;
+const uint8_t MSG_VENDOR_DISABLE      = 0x71;
+const uint8_t MSG_VENDOR_SET          = 0x72;
+const uint8_t MSG_VENDOR_GET          = 0x73;
+const uint8_t MSG_VENDOR              = 0xF0;
+const uint8_t MSG_VENDOR_ACK          = 0xF1;
 
 // --- Firmware Update Messages ---
-const uint8_t MSG_FW_UPDATE_OP = 0x78;
-const uint8_t MSG_FW_UPDATE_STAT = 0xF8;
+const uint8_t MSG_FW_UPDATE_OP        = 0x78;
+const uint8_t MSG_FW_UPDATE_STAT      = 0xF8;
 
 
 // --- Command Station Constants ---
-const uint8_t BIDIB_CS_STATE_OFF = 0;  ///< Track voltage is off
-const uint8_t BIDIB_CS_STATE_STOP = 1; ///< Track voltage is on, but zero speed commands are sent
-const uint8_t BIDIB_CS_STATE_GO = 2;   ///< Track voltage is on, normal operation
+const uint8_t BIDIB_CS_STATE_OFF           = 0;  ///< Track voltage is off
+const uint8_t BIDIB_CS_STATE_STOP          = 1; ///< Track voltage is on, but zero speed commands are sent
+const uint8_t BIDIB_CS_STATE_GO            = 2;   ///< Track voltage is on, normal operation
 
 // --- POM Opcodes ---
-const uint8_t BIDIB_CS_POM_RD_BLOCK = 0x00;
-const uint8_t BIDIB_CS_POM_RD_BYTE = 0x01;
-const uint8_t BIDIB_CS_POM_WR_BIT = 0x02;
-const uint8_t BIDIB_CS_POM_WR_BYTE = 0x03;
+const uint8_t BIDIB_CS_POM_RD_BLOCK        = 0x00;
+const uint8_t BIDIB_CS_POM_RD_BYTE         = 0x01;
+const uint8_t BIDIB_CS_POM_WR_BIT          = 0x02;
+const uint8_t BIDIB_CS_POM_WR_BYTE         = 0x03;
 
 // --- Booster Constants ---
-const uint8_t BIDIB_BST_STATE_OFF = 0x00;         ///< Booster is off (general)
-const uint8_t BIDIB_BST_STATE_OFF_SHORT = 0x01;  ///< Booster is off due to short circuit
+const uint8_t BIDIB_BST_STATE_OFF          = 0x00;         ///< Booster is off (general)
+const uint8_t BIDIB_BST_STATE_OFF_SHORT    = 0x01;  ///< Booster is off due to short circuit
 const uint8_t BIDIB_BST_STATE_OFF_OVERHEAT = 0x02;///< Booster is off due to overheating
-const uint8_t BIDIB_BST_STATE_ON = 0x80;         ///< Booster is on
-const uint8_t BIDIB_BST_STATE_ON_LIMIT = 0x81;   ///< Booster is on and in current-limiting mode
+const uint8_t BIDIB_BST_STATE_ON           = 0x80;         ///< Booster is on
+const uint8_t BIDIB_BST_STATE_ON_LIMIT     = 0x81;   ///< Booster is on and in current-limiting mode
 
-const uint8_t BIDIB_BST_DIAG_CURRENT = 0x00;     ///< Diagnostic key for current
-const uint8_t BIDIB_BST_DIAG_VOLTAGE = 0x01;     ///< Diagnostic key for voltage
-const uint8_t BIDIB_BST_DIAG_TEMP = 0x02;        ///< Diagnostic key for temperature
+const uint8_t BIDIB_BST_DIAG_CURRENT       = 0x00;     ///< Diagnostic key for current
+const uint8_t BIDIB_BST_DIAG_VOLTAGE       = 0x01;     ///< Diagnostic key for voltage
+const uint8_t BIDIB_BST_DIAG_TEMP          = 0x02;        ///< Diagnostic key for temperature
 
 // --- Firmware Update Constants ---
-const uint8_t BIDIB_MSG_FW_UPDATE_OP_ENTER = 0x00;   ///< Enter update mode
-const uint8_t BIDIB_MSG_FW_UPDATE_OP_EXIT = 0x01;    ///< Exit update mode
+const uint8_t BIDIB_MSG_FW_UPDATE_OP_ENTER   = 0x00;   ///< Enter update mode
+const uint8_t BIDIB_MSG_FW_UPDATE_OP_EXIT    = 0x01;    ///< Exit update mode
 const uint8_t BIDIB_MSG_FW_UPDATE_OP_SETDEST = 0x02; ///< Set destination memory
-const uint8_t BIDIB_MSG_FW_UPDATE_OP_DATA = 0x03;    ///< Transmit firmware data
-const uint8_t BIDIB_MSG_FW_UPDATE_OP_DONE = 0x04;    ///< End of data transmission
+const uint8_t BIDIB_MSG_FW_UPDATE_OP_DATA    = 0x03;    ///< Transmit firmware data
+const uint8_t BIDIB_MSG_FW_UPDATE_OP_DONE    = 0x04;    ///< End of data transmission
 
-const uint8_t BIDIB_MSG_FW_UPDATE_STAT_READY = 0x00; ///< Node is ready
-const uint8_t BIDIB_MSG_FW_UPDATE_STAT_EXIT = 0x01;  ///< Node is exiting
-const uint8_t BIDIB_MSG_FW_UPDATE_STAT_DATA = 0x02;  ///< Node is expecting data
+const uint8_t BIDIB_MSG_FW_UPDATE_STAT_READY =   0; ///< Node is ready
+const uint8_t BIDIB_MSG_FW_UPDATE_STAT_EXIT  =   1;  ///< Node is exiting
+const uint8_t BIDIB_MSG_FW_UPDATE_STAT_DATA  =   2;  ///< Node is expecting data
 const uint8_t BIDIB_MSG_FW_UPDATE_STAT_ERROR = 255;  ///< Error occurred
 
 //================================================================================
@@ -143,10 +143,10 @@ const uint8_t BIDIB_MAX_FEATURES = 16;
 
 // --- Feature Constants ---
 const uint8_t BIDIB_FEATURE_FW_UPDATE_SUPPORT = 0;     ///< 1 if firmware update is supported
-const uint8_t BIDIB_FEATURE_STRING_SIZE = 1;           ///< Maximum size of strings
+const uint8_t BIDIB_FEATURE_STRING_SIZE       = 1;           ///< Maximum size of strings
 const uint8_t BIDIB_FEATURE_MSG_RECEIVE_COUNT = 2;     ///< How many messages can be received at once
-const uint8_t FEATURE_BM_SECACK_AVAILABLE = 2;         ///< Indicates if Secure-ACK is supported
-const uint8_t FEATURE_BM_SECACK_ON = 3;                ///< Enables the Secure-ACK mechanism
+const uint8_t FEATURE_BM_SECACK_AVAILABLE     = 2;         ///< Indicates if Secure-ACK is supported
+const uint8_t FEATURE_BM_SECACK_ON            = 3;                ///< Enables the Secure-ACK mechanism
 
 /// @brief Structure representing a node on the BiDiB bus.
 struct BiDiBNode
@@ -238,9 +238,9 @@ typedef void (*FirmwareUpdateStatusCallback)(uint8_t status, uint8_t detail);
 // Secure ACK Configuration
 //================================================================================
 
-const unsigned long SECURE_ACK_TIMEOUT = 1000; ///< Timeout in milliseconds for Secure-ACK
-const uint8_t SECURE_ACK_RETRIES = 3;          ///< Number of retries for a Secure-ACK message
-const uint8_t MAX_PENDING_SECURE_ACKS = 8;     ///< Maximum number of parallel Secure-ACKs
+const unsigned long SECURE_ACK_TIMEOUT      = 1000; ///< Timeout in milliseconds for Secure-ACK
+const uint8_t       SECURE_ACK_RETRIES      =    3; ///< Number of retries for a Secure-ACK message
+const uint8_t       MAX_PENDING_SECURE_ACKS =    8; ///< Maximum number of parallel Secure-ACKs
 
 /// @brief Structure to hold information about a pending Secure-ACK message.
 struct PendingSecureAck

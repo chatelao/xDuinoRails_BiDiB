@@ -26,6 +26,6 @@ Vor jeder Umsetzung ist das `implementation_plan.md` zu lesen. Nach der Umsetzun
 
 ## Code Formatting
 
-- **Constant Alignment:** When defining multiple constants in a row, the `=` signs should be aligned for readability.
+- **Constant Alignment:** When defining multiple constants in a row, the `=` signs should be vertically aligned. Additionally, the numeric values should be right-aligned based on the widest value in the block. The original numeric base (e.g., decimal, hexadecimal) of all values must be preserved.
 
-- **Konstantenausrichtung (DE):** Bei der Definition von mehreren Konstanten hintereinander sollen die `=` Zeichen zur besseren Lesbarkeit ausgerichtet werden.
+- **Konstantenausrichtung (DE):** Bei der Definition von mehreren Konstanten hintereinander sollen die `=` Zeichen vertikal ausgerichtet werden. Zusätzlich sollen die numerischen Werte rechtsbündig am breitesten Wert im Block ausgerichtet werden. Die ursprüngliche numerische Basis (z.B. dezimal, hexadezimal) aller Werte muss erhalten bleiben.
