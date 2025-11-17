@@ -76,14 +76,14 @@ void test_send_track_off(void) {
     TEST_ASSERT_EQUAL(0, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(MSG_CS_SET_STATE, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(BIDIB_CS_STATE_OFF, mockSerial.read_outgoing());
-    TEST_ASSERT_EQUAL(150, mockSerial.read_outgoing()); // CRC
+    TEST_ASSERT_EQUAL(161, mockSerial.read_outgoing()); // CRC
     TEST_ASSERT_EQUAL(BIDIB_MAGIC, mockSerial.read_outgoing());
 }
 
 void test_send_track_stop(void) {
     bidib.setTrackState(BIDIB_CS_STATE_STOP);
 
-    // FE 04 00 00 48 01 C8 FE
+    // FE 04 00 00 48 01 90 FE
     TEST_ASSERT_EQUAL(8, mockSerial.available_outgoing());
     TEST_ASSERT_EQUAL(BIDIB_MAGIC, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(4, mockSerial.read_outgoing());
@@ -91,14 +91,14 @@ void test_send_track_stop(void) {
     TEST_ASSERT_EQUAL(0, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(MSG_CS_SET_STATE, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(BIDIB_CS_STATE_STOP, mockSerial.read_outgoing());
-    TEST_ASSERT_EQUAL(200, mockSerial.read_outgoing()); // CRC
+    TEST_ASSERT_EQUAL(144, mockSerial.read_outgoing()); // CRC
     TEST_ASSERT_EQUAL(BIDIB_MAGIC, mockSerial.read_outgoing());
 }
 
 void test_send_track_go(void) {
     bidib.setTrackState(BIDIB_CS_STATE_GO);
 
-    // FE 04 00 00 48 02 2A FE
+    // FE 04 00 00 48 02 C3 FE
     TEST_ASSERT_EQUAL(8, mockSerial.available_outgoing());
     TEST_ASSERT_EQUAL(BIDIB_MAGIC, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(4, mockSerial.read_outgoing());
@@ -106,7 +106,7 @@ void test_send_track_go(void) {
     TEST_ASSERT_EQUAL(0, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(MSG_CS_SET_STATE, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(BIDIB_CS_STATE_GO, mockSerial.read_outgoing());
-    TEST_ASSERT_EQUAL(42, mockSerial.read_outgoing()); // CRC
+    TEST_ASSERT_EQUAL(195, mockSerial.read_outgoing()); // CRC
     TEST_ASSERT_EQUAL(BIDIB_MAGIC, mockSerial.read_outgoing());
 }
 
