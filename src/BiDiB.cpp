@@ -31,10 +31,12 @@ BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false), _system_enabled(t
     _pomAckCallback = nullptr;
     _boosterStatusCallback = nullptr;
     _boosterDiagnosticCallback = nullptr;
+    _boosterCommandCallback = nullptr;
     _occupancyCallback = nullptr;
     _occupancyMultipleCallback = nullptr;
     _addressCallback = nullptr;
     _accessoryStateCallback = nullptr;
+    _accessoryCommandCallback = nullptr;
     _firmwareUpdateStatusCallback = nullptr;
 
     // Initialize the pending Secure-ACKs list.
@@ -147,8 +149,22 @@ void BiDiB::onBoosterStatus(BoosterStatusCallback callback) {
     _boosterStatusCallback = callback;
 }
 
+void BiDiB::sendBoosterStatus(uint8_t status) {
+    BiDiBMessage msg;
+    msg.length = 4;
+    msg.address[0] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_BOOST_STAT;
+    msg.data[0] = status;
+    sendMessage(msg);
+}
+
 void BiDiB::onBoosterDiagnostic(BoosterDiagnosticCallback callback) {
     _boosterDiagnosticCallback = callback;
+}
+
+void BiDiB::onBoosterCommand(BoosterCommandCallback callback) {
+    _boosterCommandCallback = callback;
 }
 
 // =============================================================================
@@ -292,6 +308,21 @@ void BiDiB::getAccessory(uint8_t accessoryNum) {
 
 void BiDiB::onAccessoryState(AccessoryStateCallback callback) {
     _accessoryStateCallback = callback;
+}
+
+void BiDiB::sendAccessoryState(uint8_t accessoryNum, uint8_t aspect) {
+    BiDiBMessage msg;
+    msg.length = 5;
+    msg.address[0] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_ACCESSORY_STATE;
+    msg.data[0] = accessoryNum;
+    msg.data[1] = aspect;
+    sendMessage(msg);
+}
+
+void BiDiB::onAccessoryCommand(AccessoryCommandCallback callback) {
+    _accessoryCommandCallback = callback;
 }
 
 // =============================================================================
@@ -732,6 +763,14 @@ void BiDiB::handleMessages() {
         }
 
         // --- Accessory Control ---
+        case MSG_ACCESSORY_SET: {
+            if (_accessoryCommandCallback != nullptr) {
+                uint8_t accessoryNum = msg.data[0];
+                uint8_t aspect = msg.data[1];
+                _accessoryCommandCallback(accessoryNum, aspect);
+            }
+            break;
+        }
         case MSG_ACCESSORY_STATE:
         case MSG_ACCESSORY_NOTIFY: {
             if (_accessoryStateCallback != nullptr) {
@@ -743,6 +782,18 @@ void BiDiB::handleMessages() {
         }
 
         // --- Booster Status ---
+        case MSG_BOOST_ON: {
+            if (_boosterCommandCallback != nullptr) {
+                _boosterCommandCallback(true);
+            }
+            break;
+        }
+        case MSG_BOOST_OFF: {
+            if (_boosterCommandCallback != nullptr) {
+                _boosterCommandCallback(false);
+            }
+            break;
+        }
         case MSG_BOOST_STAT: {
             if (_boosterStatusCallback != nullptr) {
                 _boosterStatusCallback(msg.data[0]);

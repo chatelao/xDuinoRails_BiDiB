@@ -217,6 +217,15 @@ typedef void (*BoosterStatusCallback)(uint8_t status);
 /// @param value The diagnostic value.
 typedef void (*BoosterDiagnosticCallback)(uint8_t type, uint16_t value);
 
+/// @brief Callback function type for booster control commands (Node receiving MSG_BOOST_ON/OFF).
+/// @param on True to turn the booster on, false to turn it off.
+typedef void (*BoosterCommandCallback)(bool on);
+
+/// @brief Callback function type for native accessory control commands (Node receiving MSG_ACCESSORY_SET).
+/// @param accessoryNum The number of the accessory.
+/// @param aspect The desired aspect (state) to set.
+typedef void (*AccessoryCommandCallback)(uint8_t accessoryNum, uint8_t aspect);
+
 /// @brief Callback function type for vendor ACK reports.
 /// @param node_addr The address of the node that sent the ACK.
 /// @param status The acknowledgement status.
@@ -369,9 +378,17 @@ public:
     /// @param callback The function to be called.
     void onBoosterStatus(BoosterStatusCallback callback);
 
+    /// @brief Sends a booster status report (Node -> Host).
+    /// @param status The current status (BIDIB_BST_STATE_*).
+    void sendBoosterStatus(uint8_t status);
+
     /// @brief Registers a callback function to be called when a booster diagnostic report is received.
     /// @param callback The function to be called.
     void onBoosterDiagnostic(BoosterDiagnosticCallback callback);
+
+    /// @brief Registers a callback function to be called when a booster command is received (Node role).
+    /// @param callback The function to be called.
+    void onBoosterCommand(BoosterCommandCallback callback);
 
     // --- Vendor-Specific Functions ---
 
@@ -453,6 +470,15 @@ public:
     /// @param callback The function to be called.
     void onAccessoryState(AccessoryStateCallback callback);
 
+    /// @brief Sends an accessory state report (Node -> Host).
+    /// @param accessoryNum The accessory number.
+    /// @param aspect The current aspect.
+    void sendAccessoryState(uint8_t accessoryNum, uint8_t aspect);
+
+    /// @brief Registers a callback function to be called when a native accessory set command is received (Node role).
+    /// @param callback The function to be called.
+    void onAccessoryCommand(AccessoryCommandCallback callback);
+
     // --- Occupancy Reporting ---
 
     /// @brief Registers a callback function to be called for single occupancy detector events (occupied/free).
@@ -509,6 +535,7 @@ protected:
     PomAckCallback _pomAckCallback;
     BoosterStatusCallback _boosterStatusCallback;
     BoosterDiagnosticCallback _boosterDiagnosticCallback;
+    BoosterCommandCallback _boosterCommandCallback;
     VendorAckCallback _vendorAckCallback;
     VendorDataCallback _vendorDataCallback;
     OccupancyCallback _occupancyCallback;
@@ -517,6 +544,7 @@ protected:
     SpeedCallback _speedCallback;
     CvCallback _cvCallback;
     AccessoryStateCallback _accessoryStateCallback;
+    AccessoryCommandCallback _accessoryCommandCallback;
     FirmwareUpdateStatusCallback _firmwareUpdateStatusCallback;
 
 protected:

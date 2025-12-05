@@ -19,6 +19,17 @@ void accessoryStateCallback(uint8_t accessoryNum, uint8_t aspect) {
     callbackAspect = aspect;
 }
 
+// Callback flags and variables for command
+bool accessoryCommandCallbackCalled = false;
+uint8_t commandAccessoryNum = 0;
+uint8_t commandAspect = 0;
+
+void accessoryCommandCallback(uint8_t accessoryNum, uint8_t aspect) {
+    accessoryCommandCallbackCalled = true;
+    commandAccessoryNum = accessoryNum;
+    commandAspect = aspect;
+}
+
 void setUp(void) {
     ArduinoFakeReset();
     mockSerial.clear();
@@ -27,6 +38,11 @@ void setUp(void) {
     callbackAccessoryNum = 0;
     callbackAspect = 0;
     bidib.onAccessoryState(accessoryStateCallback);
+
+    accessoryCommandCallbackCalled = false;
+    commandAccessoryNum = 0;
+    commandAspect = 0;
+    bidib.onAccessoryCommand(accessoryCommandCallback);
 }
 
 void tearDown(void) {
@@ -104,6 +120,23 @@ void test_handleAccessoryNotify() {
     TEST_ASSERT_EQUAL(1, callbackAspect);
 }
 
+void test_handleAccessoryCommand() {
+    // Simulate receiving MSG_ACCESSORY_SET
+    // LEN = 5, ADDR = 0, MSG_NUM = 0, MSG_ACCESSORY_SET, ANUM=9, ASPECT=1
+    uint8_t crc_payload[] = {0x05, 0x00, 0x00, 0x38, 0x09, 0x01};
+    uint8_t crc = bidib.calculateCrc(crc_payload, sizeof(crc_payload));
+    uint8_t incoming_msg[] = {0xFE, 0x05, 0x00, 0x00, 0x38, 0x09, 0x01, crc, 0xFE};
+
+    mockSerial.addIncoming(incoming_msg, sizeof(incoming_msg));
+
+    bidib.update();
+    bidib.handleMessages();
+
+    TEST_ASSERT_TRUE(accessoryCommandCallbackCalled);
+    TEST_ASSERT_EQUAL(9, commandAccessoryNum);
+    TEST_ASSERT_EQUAL(1, commandAspect);
+}
+
 
 int main() {
     UNITY_BEGIN();
@@ -111,6 +144,7 @@ int main() {
     RUN_TEST(test_getAccessory);
     RUN_TEST(test_handleAccessoryState);
     RUN_TEST(test_handleAccessoryNotify);
+    RUN_TEST(test_handleAccessoryCommand);
     UNITY_END();
     return 0;
 }

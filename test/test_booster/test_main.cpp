@@ -22,6 +22,14 @@ void boosterDiagnosticCallback(uint8_t type, uint16_t value) {
     received_diagnostic_value = value;
 }
 
+// Placeholder for booster command callback
+bool received_booster_command_on = false;
+bool booster_command_received_flag = false;
+void boosterCommandCallback(bool on) {
+    received_booster_command_on = on;
+    booster_command_received_flag = true;
+}
+
 void setUp(void) {
     ArduinoFakeReset();
     mockStream.clear();
@@ -29,8 +37,10 @@ void setUp(void) {
     received_booster_status = 0xFF;
     received_diagnostic_type = 0xFF;
     received_diagnostic_value = 0xFFFF;
+    booster_command_received_flag = false;
     bidib.onBoosterStatus(boosterStatusCallback);
     bidib.onBoosterDiagnostic(boosterDiagnosticCallback);
+    bidib.onBoosterCommand(boosterCommandCallback);
 }
 
 void tearDown(void) {}
@@ -105,10 +115,30 @@ void test_handleMultiBoosterDiagnostic() {
     bidib.update();
     bidib.handleMessages();
 
-    // Note: This test only verifies the LAST diagnostic value received.
-    // A more robust test would require storing all received values.
     TEST_ASSERT_EQUAL_UINT8(BIDIB_BST_DIAG_VOLTAGE, received_diagnostic_type);
     TEST_ASSERT_EQUAL_UINT16(voltage_value, received_diagnostic_value);
+}
+
+void test_handleBoosterCommandOn() {
+    uint8_t payload[] = { 0x03, 0x00, 0x00, MSG_BOOST_ON };
+    uint8_t crc = bidib.calculateCrc(payload, sizeof(payload));
+    uint8_t incoming[] = { BIDIB_MAGIC, 0x03, 0x00, 0x00, MSG_BOOST_ON, crc, BIDIB_MAGIC };
+    mockStream.addIncoming(incoming, sizeof(incoming));
+    bidib.update();
+    bidib.handleMessages();
+    TEST_ASSERT_TRUE(booster_command_received_flag);
+    TEST_ASSERT_TRUE(received_booster_command_on);
+}
+
+void test_handleBoosterCommandOff() {
+    uint8_t payload[] = { 0x03, 0x00, 0x00, MSG_BOOST_OFF };
+    uint8_t crc = bidib.calculateCrc(payload, sizeof(payload));
+    uint8_t incoming[] = { BIDIB_MAGIC, 0x03, 0x00, 0x00, MSG_BOOST_OFF, crc, BIDIB_MAGIC };
+    mockStream.addIncoming(incoming, sizeof(incoming));
+    bidib.update();
+    bidib.handleMessages();
+    TEST_ASSERT_TRUE(booster_command_received_flag);
+    TEST_ASSERT_FALSE(received_booster_command_on);
 }
 
 
@@ -124,6 +154,8 @@ int main(int argc, char **argv) {
     RUN_TEST(test_handleBoosterStatus);
     RUN_TEST(test_handleBoosterDiagnostic);
     RUN_TEST(test_handleMultiBoosterDiagnostic);
+    RUN_TEST(test_handleBoosterCommandOn);
+    RUN_TEST(test_handleBoosterCommandOff);
     UNITY_END();
     return 0;
 }
