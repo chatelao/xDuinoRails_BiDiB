@@ -38,8 +38,8 @@ void test_setAccessory() {
 
     // Expected message: MAGIC | LEN | ADDR | MSG_NUM | MSG_ACCESSORY_SET | ANUM | ASPECT | CRC | MAGIC
     // LEN = 5, ADDR = 0, MSG_NUM = 0, ANUM = 5, ASPECT = 1
-    uint8_t expected_msg[] = {0xFE, 0x05, 0x00, 0x00, 0x38, 0x05, 0x01, 0x00, 0xFE};
-    uint8_t crc_payload[] = {0x05, 0x00, 0x00, 0x38, 0x05, 0x01};
+    uint8_t expected_msg[] = {0xFE, 0x05, 0x00, 0x00, MSG_ACCESSORY_SET, 0x05, 0x01, 0x00, 0xFE};
+    uint8_t crc_payload[] = {0x05, 0x00, 0x00, MSG_ACCESSORY_SET, 0x05, 0x01};
     expected_msg[7] = bidib.calculateCrc(crc_payload, sizeof(crc_payload));
 
     uint8_t actual_msg[sizeof(expected_msg)];
@@ -53,12 +53,12 @@ void test_getAccessory() {
 
     // Expected message: MAGIC | LEN | ADDR | MSG_NUM | MSG_ACCESSORY_GET | ANUM | CRC | MAGIC
     // LEN = 4, ADDR = 0, MSG_NUM = 0, ANUM = 10
-    uint8_t expected_msg[] = {0xFE, 0x04, 0x00, 0x00, 0x39, 0x0A, 0x00, 0xFE};
-    uint8_t crc_payload[] = {0x04, 0x00, 0x00, 0x39, 0x0A};
+    uint8_t expected_msg[] = {0xFE, 0x04, 0x00, 0x00, MSG_ACCESSORY_GET, 0x0A, 0x00, 0xFE};
+    uint8_t crc_payload[] = {0x04, 0x00, 0x00, MSG_ACCESSORY_GET, 0x0A};
     uint8_t crc = bidib.calculateCrc(crc_payload, sizeof(crc_payload));
 
     if (crc == 0xFE || crc == 0xFD) {
-        uint8_t expected_msg_escaped[] = {0xFE, 0x04, 0x00, 0x00, 0x39, 0x0A, 0xFD, (uint8_t)(crc ^ 0x20), 0xFE};
+        uint8_t expected_msg_escaped[] = {0xFE, 0x04, 0x00, 0x00, MSG_ACCESSORY_GET, 0x0A, 0xFD, (uint8_t)(crc ^ 0x20), 0xFE};
         uint8_t actual_msg[sizeof(expected_msg_escaped)];
         mockSerial.read_outgoing(actual_msg, sizeof(actual_msg));
         TEST_ASSERT_EQUAL_HEX8_ARRAY(expected_msg_escaped, actual_msg, sizeof(expected_msg_escaped));
@@ -73,9 +73,9 @@ void test_getAccessory() {
 void test_handleAccessoryState() {
     // Simulate receiving MSG_ACCESSORY_STATE
     // LEN = 5, ADDR = 0, MSG_NUM = 0, MSG_ACCESSORY_STATE, ANUM=7, ASPECT=0
-    uint8_t crc_payload[] = {0x05, 0x00, 0x00, 0xB8, 0x07, 0x00};
+    uint8_t crc_payload[] = {0x05, 0x00, 0x00, MSG_ACCESSORY_STATE, 0x07, 0x00};
     uint8_t crc = bidib.calculateCrc(crc_payload, sizeof(crc_payload));
-    uint8_t incoming_msg[] = {0xFE, 0x05, 0x00, 0x00, 0xB8, 0x07, 0x00, crc, 0xFE};
+    uint8_t incoming_msg[] = {0xFE, 0x05, 0x00, 0x00, MSG_ACCESSORY_STATE, 0x07, 0x00, crc, 0xFE};
 
     mockSerial.addIncoming(incoming_msg, sizeof(incoming_msg));
 
@@ -90,9 +90,9 @@ void test_handleAccessoryState() {
 void test_handleAccessoryNotify() {
     // Simulate receiving MSG_ACCESSORY_NOTIFY
     // LEN = 5, ADDR = 0, MSG_NUM = 0, MSG_ACCESSORY_NOTIFY, ANUM=12, ASPECT=1
-    uint8_t crc_payload[] = {0x05, 0x00, 0x00, 0xB9, 0x0C, 0x01};
+    uint8_t crc_payload[] = {0x05, 0x00, 0x00, MSG_ACCESSORY_NOTIFY, 0x0C, 0x01};
     uint8_t crc = bidib.calculateCrc(crc_payload, sizeof(crc_payload));
-    uint8_t incoming_msg[] = {0xFE, 0x05, 0x00, 0x00, 0xB9, 0x0C, 0x01, crc, 0xFE};
+    uint8_t incoming_msg[] = {0xFE, 0x05, 0x00, 0x00, MSG_ACCESSORY_NOTIFY, 0x0C, 0x01, crc, 0xFE};
 
     mockSerial.addIncoming(incoming_msg, sizeof(incoming_msg));
 

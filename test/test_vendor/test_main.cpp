@@ -91,7 +91,7 @@ void build_and_escape(uint8_t* dest, const uint8_t* payload, size_t payload_size
 void test_vendorEnable() {
     bidib.vendorEnable(10);
 
-    const uint8_t payload[] = { 0x04, 0x0A, 0x00, 0x00, 0x70 };
+    const uint8_t payload[] = { 0x04, 0x0A, 0x00, 0x00, MSG_VENDOR_ENABLE };
     uint8_t expected[sizeof(payload) + 3]; // MAGIC, CRC, MAGIC
     build_and_escape(expected, payload, sizeof(payload));
 
@@ -104,7 +104,7 @@ void test_vendorEnable() {
 void test_vendorDisable() {
     bidib.vendorDisable(10);
 
-    const uint8_t payload[] = { 0x04, 0x0A, 0x00, 0x00, 0x71 };
+    const uint8_t payload[] = { 0x04, 0x0A, 0x00, 0x00, MSG_VENDOR_DISABLE };
     uint8_t expected[sizeof(payload) + 3];
     build_and_escape(expected, payload, sizeof(payload));
 
@@ -117,7 +117,7 @@ void test_vendorDisable() {
 void test_vendorGet() {
     bidib.vendorGet(10, "test_name");
 
-    const uint8_t payload[] = { 0x0E, 0x0A, 0x00, 0x00, 0x73, 't','e','s','t','_','n','a','m','e', 0x00 };
+    const uint8_t payload[] = { 0x0E, 0x0A, 0x00, 0x00, MSG_VENDOR_GET, 't','e','s','t','_','n','a','m','e', 0x00 };
     uint8_t expected[sizeof(payload) + 3];
     build_and_escape(expected, payload, sizeof(payload));
 
@@ -130,7 +130,7 @@ void test_vendorGet() {
 void test_vendorSet() {
     bidib.vendorSet(10, "test_name", "test_value");
 
-    const uint8_t payload[] = { 0x19, 0x0A, 0x00, 0x00, 0x72, 't','e','s','t','_','n','a','m','e', '=', 't','e','s','t','_','v','a','l','u','e', 0x00 };
+    const uint8_t payload[] = { 0x19, 0x0A, 0x00, 0x00, MSG_VENDOR_SET, 't','e','s','t','_','n','a','m','e', '=', 't','e','s','t','_','v','a','l','u','e', 0x00 };
     uint8_t expected[sizeof(payload) + 3];
     build_and_escape(expected, payload, sizeof(payload));
 
@@ -141,7 +141,7 @@ void test_vendorSet() {
 }
 
 void test_handleVendorAck() {
-    const uint8_t payload[] = { 0x05, 0x0A, 0x00, 0x00, 0xF1, 0x01 };
+    const uint8_t payload[] = { 0x05, 0x0A, 0x00, 0x00, MSG_VENDOR_ACK, 0x01 };
     uint8_t incoming[sizeof(payload) + 3];
     build_and_escape(incoming, payload, sizeof(payload));
     mockStream.addIncoming(incoming, sizeof(incoming));
@@ -155,7 +155,7 @@ void test_handleVendorAck() {
 }
 
 void test_handleVendorData() {
-    const uint8_t payload[] = { 0x19, 0x0A, 0x00, 0x00, 0xF0, 't','e','s','t','_','n','a','m','e', '=', 't','e','s','t','_','v','a','l','u','e', 0x00 };
+    const uint8_t payload[] = { 0x19, 0x0A, 0x00, 0x00, MSG_VENDOR, 't','e','s','t','_','n','a','m','e', '=', 't','e','s','t','_','v','a','l','u','e', 0x00 };
     uint8_t incoming[sizeof(payload) + 3];
     build_and_escape(incoming, payload, sizeof(payload));
     mockStream.addIncoming(incoming, sizeof(incoming));

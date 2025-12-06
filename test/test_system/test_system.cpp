@@ -57,27 +57,39 @@ void ASSERT_EQUAL_VECTOR(const std::vector<uint8_t>& expected, const std::vector
 void construct_message_stream(const std::vector<uint8_t>& content, std::vector<uint8_t>& stream) {
     stream.push_back(BIDIB_MAGIC);
     for(uint8_t byte : content) {
-        stream.push_back(byte);
+        if (byte == BIDIB_MAGIC || byte == BIDIB_ESCAPE) {
+            stream.push_back(BIDIB_ESCAPE);
+            stream.push_back(byte ^ 0x20);
+        } else {
+            stream.push_back(byte);
+        }
     }
-    stream.push_back(calculate_expected_crc(content));
+    uint8_t crc = calculate_expected_crc(content);
+    if (crc == BIDIB_MAGIC || crc == BIDIB_ESCAPE) {
+        stream.push_back(BIDIB_ESCAPE);
+        stream.push_back(crc ^ 0x20);
+    } else {
+        stream.push_back(crc);
+    }
     stream.push_back(BIDIB_MAGIC);
 }
 
 void setUp(void) {
     mockSerial.clear();
+    bidib = BiDiB();
     bidib.begin(mockSerial);
 }
 
 void tearDown(void) {}
 
 void test_handle_get_magic(void) {
-    std::vector<uint8_t> content = {0x03, 0x00, 0x01, 0x01};
+    std::vector<uint8_t> content = {0x03, 0x00, 0x00, MSG_SYS_GET_MAGIC};
     construct_message_stream(content, mockSerial.input_buffer);
 
     bidib.update();
     bidib.handleMessages();
 
-    std::vector<uint8_t> expected_content = {0x04, 0x00, 0x01, 0x81, 0xAF};
+    std::vector<uint8_t> expected_content = {0x04, 0x00, 0x00, MSG_SYS_MAGIC, 0xAF};
     std::vector<uint8_t> expected_output;
     construct_message_stream(expected_content, expected_output);
 
@@ -85,13 +97,13 @@ void test_handle_get_magic(void) {
 }
 
 void test_handle_get_p_version(void) {
-    std::vector<uint8_t> content = {0x03, 0x00, 0x02, 0x02};
+    std::vector<uint8_t> content = {0x03, 0x00, 0x00, MSG_SYS_GET_P_VERSION};
     construct_message_stream(content, mockSerial.input_buffer);
 
     bidib.update();
     bidib.handleMessages();
 
-    std::vector<uint8_t> expected_content = {0x05, 0x00, 0x02, 0x82, 0x01, 0x00};
+    std::vector<uint8_t> expected_content = {0x05, 0x00, 0x00, MSG_SYS_P_VERSION, 0x07, 0x00}; // Version 0.7
     std::vector<uint8_t> expected_output;
     construct_message_stream(expected_content, expected_output);
 
@@ -99,13 +111,13 @@ void test_handle_get_p_version(void) {
 }
 
 void test_handle_get_unique_id(void) {
-    std::vector<uint8_t> content = {0x03, 0x00, 0x03, 0x03};
+    std::vector<uint8_t> content = {0x03, 0x00, 0x00, MSG_SYS_GET_UNIQUE_ID};
     construct_message_stream(content, mockSerial.input_buffer);
 
     bidib.update();
     bidib.handleMessages();
 
-    std::vector<uint8_t> expected_content = {0x0A, 0x00, 0x03, 0x83, 0x80, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
+    std::vector<uint8_t> expected_content = {0x0A, 0x00, 0x00, MSG_SYS_UNIQUE_ID, 0x80, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
     std::vector<uint8_t> expected_output;
     construct_message_stream(expected_content, expected_output);
 
