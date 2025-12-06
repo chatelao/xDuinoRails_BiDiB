@@ -1,3 +1,4 @@
+#ifdef CI_BUILD
 #include <Arduino.h>
 #include "BiDiB.h"
 
@@ -27,3 +28,4 @@ int main(int argc, char **argv) {
 #endif // defined(ARDUINO)
 
 #endif // !defined(UNIT_TEST)
+#endif // CI_BUILD
