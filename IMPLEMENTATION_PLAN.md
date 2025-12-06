@@ -143,11 +143,11 @@ Vor jeder neuen Implementierung ist dieses Dokument zu konsultieren. Nach Abschl
 
 **Ziel:** Unterstützung von RailcomPlus zur automatischen Anmeldung von Decodern.
 
-- [ ] **8.1. Zentrale (CS):**
-    - [ ] Implementierung von `MSG_CS_RCPLUS` und `MSG_CS_RCPLUS_ACK`.
-    - [ ] Unterstützung der Opcodes BIND, PING, FIND, TID.
-- [ ] **8.2. Rückmeldung (BM):**
-    - [ ] Verarbeitung von `MSG_BM_RCPLUS`.
+- [x] **8.1. Zentrale (CS):**
+    - [x] Implementierung von `MSG_CS_RCPLUS` und `MSG_CS_RCPLUS_ACK`.
+    - [x] Unterstützung der Opcodes BIND, PING, FIND, TID.
+- [x] **8.2. Rückmeldung (BM):**
+    - [x] Verarbeitung von `MSG_BM_RCPLUS`.
 
 ---
 

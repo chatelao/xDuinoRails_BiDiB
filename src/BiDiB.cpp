@@ -39,6 +39,7 @@ BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false), _system_enabled(t
     _lcStatCallback = nullptr;
     _lcConfigXCallback = nullptr;
     _lcWaitCallback = nullptr;
+    _rcPlusCallback = nullptr;
 
     // Initialize the pending Secure-ACKs list.
     for (int i = 0; i < MAX_PENDING_SECURE_ACKS; ++i) {
@@ -288,6 +289,43 @@ void BiDiB::onLcConfigX(LcConfigXCallback callback) {
 
 void BiDiB::onLcWait(LcWaitCallback callback) {
     _lcWaitCallback = callback;
+}
+
+// =============================================================================
+// RailcomPlus Functions
+// =============================================================================
+
+void BiDiB::onRcPlus(RcPlusCallback callback) {
+    _rcPlusCallback = callback;
+}
+
+void BiDiB::sendRcPlusAck(uint8_t opcode, const uint8_t* data, size_t len) {
+    BiDiBMessage msg;
+    msg.address[0] = 0;
+    msg.address[1] = 0; // Terminator
+    msg.msg_num = 0;
+    msg.msg_type = MSG_CS_RCPLUS_ACK;
+    msg.data[0] = opcode;
+    if (data && len > 0) {
+        memcpy(&msg.data[1], data, len);
+    }
+    // Length = addr(1) + msg_num(1) + msg_type(1) + opcode(1) + len
+    msg.length = 4 + len;
+    sendMessage(msg);
+}
+
+void BiDiB::sendBmRcPlus(const uint8_t* data, size_t len) {
+    BiDiBMessage msg;
+    msg.address[0] = 0;
+    msg.address[1] = 0; // Terminator
+    msg.msg_num = 0;
+    msg.msg_type = MSG_BM_RCPLUS;
+    if (data && len > 0) {
+        memcpy(msg.data, data, len);
+    }
+    // Length = addr(1) + msg_num(1) + msg_type(1) + len
+    msg.length = 3 + len;
+    sendMessage(msg);
 }
 
 void BiDiB::enterFirmwareUpdateMode(uint8_t node_addr) {
@@ -733,6 +771,19 @@ void BiDiB::handleMessages() {
                 uint16_t address = msg.data[0] | (msg.data[1] << 8);
                 uint8_t status = msg.data[5];
                 _pomAckCallback(address, status);
+            }
+            break;
+        }
+        case MSG_CS_RCPLUS: {
+            if (_rcPlusCallback != nullptr) {
+                int addr_len = 0;
+                for (int i=0; i<4; ++i) { if (msg.address[i] == 0) { addr_len = i + 1; break; } }
+                int data_len = msg.length - addr_len - 2;
+
+                if (data_len >= 1) {
+                    uint8_t opcode = msg.data[0];
+                    _rcPlusCallback(opcode, &msg.data[1], data_len - 1);
+                }
             }
             break;
         }
