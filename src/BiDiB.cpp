@@ -2,7 +2,7 @@
 #include "crc8.h"
 #include <string.h>
 
-BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false), _system_enabled(true) {
+BiDiB::BiDiB() : _messageAvailable(false), _system_enabled(true), _isLoggedIn(false) {
     // Initialize unique_id with a default placeholder value.
     // IMPORTANT: The user should set a truly unique ID in their setup() function.
     unique_id[0] = 0x80; unique_id[1] = 0x01; unique_id[2] = 0x02;
@@ -36,6 +36,15 @@ BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false), _system_enabled(t
     _addressCallback = nullptr;
     _accessoryStateCallback = nullptr;
     _firmwareUpdateStatusCallback = nullptr;
+
+    // Initialize LC Callbacks
+    _lcStatCallback = nullptr;
+    _lcConfigXCallback = nullptr;
+    _lcNaCallback = nullptr;
+    _lcWaitCallback = nullptr;
+    _lcMacroStateCallback = nullptr;
+    _lcMacroCallback = nullptr;
+    _lcMacroParaCallback = nullptr;
 
     // Initialize the pending Secure-ACKs list.
     for (int i = 0; i < MAX_PENDING_SECURE_ACKS; ++i) {
@@ -378,6 +387,135 @@ uint8_t BiDiB::getFeature(uint8_t feature_num) {
     }
     return 0; // Return 0 if the feature is not found.
 }
+
+// =============================================================================
+// Control / Switching Functions (LC)
+// =============================================================================
+
+void BiDiB::setLcOutput(uint8_t portL, uint8_t portH, uint8_t state) {
+    BiDiBMessage msg;
+    msg.length = 6;
+    msg.address[0] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_LC_OUTPUT;
+    msg.data[0] = portL;
+    msg.data[1] = portH;
+    msg.data[2] = state;
+    sendMessage(msg);
+}
+
+void BiDiB::queryLcPort(uint8_t portL, uint8_t portH) {
+    BiDiBMessage msg;
+    msg.length = 5;
+    msg.address[0] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_LC_PORT_QUERY;
+    msg.data[0] = portL;
+    msg.data[1] = portH;
+    sendMessage(msg);
+}
+
+void BiDiB::getLcConfigX(uint8_t portL, uint8_t portH) {
+    BiDiBMessage msg;
+    msg.length = 5;
+    msg.address[0] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_LC_CONFIGX_GET;
+    msg.data[0] = portL;
+    msg.data[1] = portH;
+    sendMessage(msg);
+}
+
+void BiDiB::setLcConfigX(uint8_t portL, uint8_t portH, uint8_t paramCount, const uint8_t* params) {
+    // params is expected to be a flat array of [type, value, type, value, ...]
+
+    // Prevent buffer overflow (max data length is 64, minus 2 bytes for port = 62)
+    if (paramCount > 62) {
+        paramCount = 62;
+    }
+
+    BiDiBMessage msg;
+    msg.length = 5 + paramCount;
+    msg.address[0] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_LC_CONFIGX_SET;
+    msg.data[0] = portL;
+    msg.data[1] = portH;
+    memcpy(&msg.data[2], params, paramCount);
+    sendMessage(msg);
+}
+
+void BiDiB::handleMacro(uint8_t macroIdx, uint8_t opcode) {
+    BiDiBMessage msg;
+    msg.length = 5;
+    msg.address[0] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_LC_MACRO_HANDLE;
+    msg.data[0] = macroIdx;
+    msg.data[1] = opcode;
+    sendMessage(msg);
+}
+
+void BiDiB::setMacro(uint8_t macroIdx, uint8_t itemIdx, uint8_t delay, uint8_t portL, uint8_t portH, uint8_t status) {
+    BiDiBMessage msg;
+    msg.length = 9;
+    msg.address[0] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_LC_MACRO_SET;
+    msg.data[0] = macroIdx;
+    msg.data[1] = itemIdx;
+    msg.data[2] = delay;
+    msg.data[3] = portL;
+    msg.data[4] = portH;
+    msg.data[5] = status;
+    sendMessage(msg);
+}
+
+void BiDiB::getMacro(uint8_t macroIdx, uint8_t itemIdx) {
+    BiDiBMessage msg;
+    msg.length = 5;
+    msg.address[0] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_LC_MACRO_GET;
+    msg.data[0] = macroIdx;
+    msg.data[1] = itemIdx;
+    sendMessage(msg);
+}
+
+void BiDiB::setMacroParameter(uint8_t macroIdx, uint8_t paraIdx, uint32_t value) {
+    BiDiBMessage msg;
+    msg.length = 9;
+    msg.address[0] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_LC_MACRO_PARA_SET;
+    msg.data[0] = macroIdx;
+    msg.data[1] = paraIdx;
+    msg.data[2] = value & 0xFF;
+    msg.data[3] = (value >> 8) & 0xFF;
+    msg.data[4] = (value >> 16) & 0xFF;
+    msg.data[5] = (value >> 24) & 0xFF;
+    sendMessage(msg);
+}
+
+void BiDiB::getMacroParameter(uint8_t macroIdx, uint8_t paraIdx) {
+    BiDiBMessage msg;
+    msg.length = 5;
+    msg.address[0] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_LC_MACRO_PARA_GET;
+    msg.data[0] = macroIdx;
+    msg.data[1] = paraIdx;
+    sendMessage(msg);
+}
+
+// --- LC Callbacks ---
+void BiDiB::onLcStat(LcStatCallback callback) { _lcStatCallback = callback; }
+void BiDiB::onLcConfigX(LcConfigXCallback callback) { _lcConfigXCallback = callback; }
+void BiDiB::onLcNa(LcNaCallback callback) { _lcNaCallback = callback; }
+void BiDiB::onLcWait(LcWaitCallback callback) { _lcWaitCallback = callback; }
+void BiDiB::onLcMacroState(LcMacroStateCallback callback) { _lcMacroStateCallback = callback; }
+void BiDiB::onLcMacro(LcMacroCallback callback) { _lcMacroCallback = callback; }
+void BiDiB::onLcMacroPara(LcMacroParaCallback callback) { _lcMacroParaCallback = callback; }
 
 // =============================================================================
 // System-Level Functions
@@ -800,6 +938,73 @@ void BiDiB::handleMessages() {
                     _pendingSecureAcks[i].active = false; // ACK received
                     break;
                 }
+            }
+            break;
+        }
+
+        // --- Control / Switching Callbacks ---
+        case MSG_LC_STAT: {
+            if (_lcStatCallback != nullptr) {
+                _lcStatCallback(msg.data[0], msg.data[1], msg.data[2]);
+            }
+            break;
+        }
+        case MSG_LC_WAIT: {
+            if (_lcWaitCallback != nullptr) {
+                _lcWaitCallback(msg.data[0], msg.data[1], msg.data[2]);
+            }
+            break;
+        }
+        case MSG_LC_NA: {
+            if (_lcNaCallback != nullptr) {
+                // Determine if error cause is present (msg len > addr + 3)
+                // Len = addr_len + 1(msg_num) + 1(type) + 2(port) + 1(err)?
+                // Minimal length for LC_NA with error is usually checked via total length
+                // Addr len for us is 0 (uplink from node usually has 0 address byte len if from self?? No, uplink has address of sender)
+                // Let's assume standard parsing logic where we look at payload data.
+                // data[0]=portL, data[1]=portH. If available, data[2]=errCause.
+                uint8_t errCause = 0;
+                // Calculate payload length: msg.length - (addr_len + 2)
+                int addr_len = 0;
+                for(int i=0; i<4; ++i) { if(msg.address[i]==0) {addr_len=i+1; break;} }
+                int payload_len = msg.length - addr_len - 2;
+                if (payload_len > 2) {
+                    errCause = msg.data[2];
+                }
+                _lcNaCallback(msg.data[0], msg.data[1], errCause);
+            }
+            break;
+        }
+        case MSG_LC_CONFIGX: {
+            if (_lcConfigXCallback != nullptr) {
+                // data[0]=portL, data[1]=portH, data[2..]=params
+                int addr_len = 0;
+                for(int i=0; i<4; ++i) { if(msg.address[i]==0) {addr_len=i+1; break;} }
+                int payload_len = msg.length - addr_len - 2;
+                if (payload_len > 2) {
+                    _lcConfigXCallback(msg.data[0], msg.data[1], payload_len - 2, &msg.data[2]);
+                } else {
+                     _lcConfigXCallback(msg.data[0], msg.data[1], 0, nullptr);
+                }
+            }
+            break;
+        }
+        case MSG_LC_MACRO_STATE: {
+            if (_lcMacroStateCallback != nullptr) {
+                _lcMacroStateCallback(msg.data[0], msg.data[1]);
+            }
+            break;
+        }
+        case MSG_LC_MACRO: {
+            if (_lcMacroCallback != nullptr) {
+                _lcMacroCallback(msg.data[0], msg.data[1], msg.data[2], msg.data[3], msg.data[4], msg.data[5]);
+            }
+            break;
+        }
+        case MSG_LC_MACRO_PARA: {
+            if (_lcMacroParaCallback != nullptr) {
+                uint32_t val = (uint32_t)msg.data[2] | ((uint32_t)msg.data[3] << 8) | ((uint32_t)msg.data[4] << 16) | ((uint32_t)msg.data[5] << 24);
+                _lcMacroParaCallback(msg.data[0], msg.data[1], val);
             }
             break;
         }

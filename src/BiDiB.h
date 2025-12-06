@@ -44,14 +44,21 @@ const uint8_t MSG_FEATURE             = 0x8D;
 const uint8_t MSG_FEATURE_NA          = 0x8E;
 
 // --- Command Station Messages ---
-const uint8_t MSG_CS_SET_STATE        = 0x48;
-const uint8_t MSG_CS_DRIVE            = 0x40;
-const uint8_t MSG_CS_ACCESSORY        = 0x42;
-const uint8_t MSG_CS_POM              = 0x44;
-const uint8_t MSG_CS_DRIVE_ACK        = 0xE0;
-const uint8_t MSG_CS_ACCESSORY_ACK    = 0xE2;
-const uint8_t MSG_CS_POM_ACK          = 0xE4;
-const uint8_t MSG_CS_STATE            = 0xE9;
+const uint8_t MSG_CS_ALLOCATE         = 0x60;
+const uint8_t MSG_CS_SET_STATE        = 0x62;
+const uint8_t MSG_CS_DRIVE            = 0x64;
+const uint8_t MSG_CS_ACCESSORY        = 0x65;
+const uint8_t MSG_CS_BIN_STATE        = 0x66;
+const uint8_t MSG_CS_POM              = 0x67;
+const uint8_t MSG_CS_RCPLUS           = 0x68;
+const uint8_t MSG_CS_PROG             = 0x6F;
+
+const uint8_t MSG_CS_DRIVE_ACK        = 0xE2;
+const uint8_t MSG_CS_ACCESSORY_ACK    = 0xE3;
+const uint8_t MSG_CS_POM_ACK          = 0xE4; // MSG_UGEN + 0x04 = 0xE4
+const uint8_t MSG_CS_DRIVE_MANUAL     = 0xE5;
+const uint8_t MSG_CS_DRIVE_EVENT      = 0xE6;
+const uint8_t MSG_CS_STATE            = 0xE9; // MSG_UGEN + 0x09 = 0xE9
 
 // --- Occupancy Messages ---
 const uint8_t MSG_BM_GET_RANGE        = 0xA0;
@@ -65,11 +72,41 @@ const uint8_t MSG_BM_ADDRESS          = 0xA4;
 const uint8_t MSG_BM_SPEED            = 0xA5;
 const uint8_t MSG_BM_CV               = 0xA6;
 
-// --- Accessory Control Messages ---
+// --- Accessory Control Messages (Standard BiDiB Accessories) ---
 const uint8_t MSG_ACCESSORY_SET       = 0x38;
 const uint8_t MSG_ACCESSORY_GET       = 0x39;
 const uint8_t MSG_ACCESSORY_STATE     = 0xB8;
 const uint8_t MSG_ACCESSORY_NOTIFY    = 0xB9;
+
+// --- Control / Switching Functions (LC) ---
+const uint8_t MSG_LC_PORT_QUERY_ALL   = 0x3F; // MSG_DLC + 0x00
+const uint8_t MSG_LC_OUTPUT           = 0x40; // MSG_DLC + 0x01
+const uint8_t MSG_LC_CONFIG_SET       = 0x41; // Deprecated
+const uint8_t MSG_LC_CONFIG_GET       = 0x42; // Deprecated
+const uint8_t MSG_LC_KEY_QUERY        = 0x43; // Deprecated
+const uint8_t MSG_LC_OUTPUT_QUERY     = 0x44; // Deprecated
+const uint8_t MSG_LC_PORT_QUERY       = 0x44; // MSG_DLC + 0x05
+const uint8_t MSG_LC_CONFIGX_GET_ALL  = 0x45; // MSG_DLC + 0x06
+const uint8_t MSG_LC_CONFIGX_SET      = 0x46; // MSG_DLC + 0x07
+const uint8_t MSG_LC_CONFIGX_GET      = 0x47; // MSG_DLC + 0x08
+
+const uint8_t MSG_LC_STAT             = 0xC0; // MSG_ULC + 0x00
+const uint8_t MSG_LC_NA               = 0xC1; // MSG_ULC + 0x01
+const uint8_t MSG_LC_CONFIG           = 0xC2; // Deprecated
+const uint8_t MSG_LC_KEY              = 0xC3; // Deprecated
+const uint8_t MSG_LC_WAIT             = 0xC4; // MSG_ULC + 0x04
+const uint8_t MSG_LC_CONFIGX          = 0xC6; // MSG_ULC + 0x06
+
+// --- Macros ---
+const uint8_t MSG_LC_MACRO_HANDLE     = 0x48; // MSG_DMAC + 0x00
+const uint8_t MSG_LC_MACRO_SET        = 0x49; // MSG_DMAC + 0x01
+const uint8_t MSG_LC_MACRO_GET        = 0x4A; // MSG_DMAC + 0x02
+const uint8_t MSG_LC_MACRO_PARA_SET   = 0x4B; // MSG_DMAC + 0x03
+const uint8_t MSG_LC_MACRO_PARA_GET   = 0x4C; // MSG_DMAC + 0x04
+
+const uint8_t MSG_LC_MACRO_STATE      = 0xC8; // MSG_UMAC + 0x00
+const uint8_t MSG_LC_MACRO            = 0xC9; // MSG_UMAC + 0x01
+const uint8_t MSG_LC_MACRO_PARA       = 0xCA; // MSG_UMAC + 0x02
 
 // --- Booster Messages ---
 const uint8_t MSG_BOOST_ON            = 0x50;
@@ -125,6 +162,37 @@ const uint8_t BIDIB_MSG_FW_UPDATE_STAT_EXIT  =   1;  ///< Node is exiting
 const uint8_t BIDIB_MSG_FW_UPDATE_STAT_DATA  =   2;  ///< Node is expecting data
 const uint8_t BIDIB_MSG_FW_UPDATE_STAT_ERROR = 255;  ///< Error occurred
 
+// --- LC Port Types ---
+const uint8_t BIDIB_PORTTYPE_SWITCH        = 0;     // standard port (on/off)
+const uint8_t BIDIB_PORTTYPE_LIGHT         = 1;     // light port
+const uint8_t BIDIB_PORTTYPE_SERVO         = 2;     // servo port
+const uint8_t BIDIB_PORTTYPE_SOUND         = 3;     // sound
+const uint8_t BIDIB_PORTTYPE_MOTOR         = 4;     // motor
+const uint8_t BIDIB_PORTTYPE_ANALOGOUT     = 5;     // analog
+const uint8_t BIDIB_PORTTYPE_BACKLIGHT     = 6;     // backlight
+const uint8_t BIDIB_PORTTYPE_SWITCHPAIR    = 7;     // width: 2, exclusive usage
+const uint8_t BIDIB_PORTTYPE_INPUT         = 15;    // simple input (open/closed)
+
+// --- LC Configuration Parameters ---
+const uint8_t BIDIB_PCFG_NONE              = 0x00;
+const uint8_t BIDIB_PCFG_LEVEL_PORT_ON     = 0x01;
+const uint8_t BIDIB_PCFG_LEVEL_PORT_OFF    = 0x02;
+const uint8_t BIDIB_PCFG_DIMM_UP           = 0x03;
+const uint8_t BIDIB_PCFG_DIMM_DOWN         = 0x04;
+const uint8_t BIDIB_PCFG_OUTPUT_MAP        = 0x06;
+const uint8_t BIDIB_PCFG_SERVO_ADJ_L       = 0x07;
+const uint8_t BIDIB_PCFG_SERVO_ADJ_H       = 0x08;
+const uint8_t BIDIB_PCFG_SERVO_SPEED       = 0x09;
+const uint8_t BIDIB_PCFG_IO_CTRL           = 0x0a;
+const uint8_t BIDIB_PCFG_TICKS             = 0x0b;
+const uint8_t BIDIB_PCFG_SWITCH_CTRL       = 0x0d;
+const uint8_t BIDIB_PCFG_INPUT_CTRL        = 0x0e;
+const uint8_t BIDIB_PCFG_DIMM_UP_8_8       = 0x43;
+const uint8_t BIDIB_PCFG_DIMM_DOWN_8_8     = 0x44;
+const uint8_t BIDIB_PCFG_RGB               = 0x80;
+const uint8_t BIDIB_PCFG_RECONFIG          = 0x81;
+const uint8_t BIDIB_PCFG_CONTINUE          = 0xFF;
+
 //================================================================================
 // BiDiB Data Structures
 //================================================================================
@@ -139,14 +207,33 @@ struct BiDiBMessage
     uint8_t data[64]; // Assuming a maximum data length
 };
 
-const uint8_t BIDIB_MAX_FEATURES = 16;
+const uint8_t BIDIB_MAX_FEATURES = 64; // Increased to accommodate more features
 
 // --- Feature Constants ---
 const uint8_t BIDIB_FEATURE_FW_UPDATE_SUPPORT = 0;     ///< 1 if firmware update is supported
 const uint8_t BIDIB_FEATURE_STRING_SIZE       = 1;           ///< Maximum size of strings
 const uint8_t BIDIB_FEATURE_MSG_RECEIVE_COUNT = 2;     ///< How many messages can be received at once
-const uint8_t FEATURE_BM_SECACK_AVAILABLE     = 2;         ///< Indicates if Secure-ACK is supported
+const uint8_t FEATURE_BM_SECACK_AVAILABLE     = 2;         ///< Indicates if Secure-ACK is supported (Legacy ID?)
 const uint8_t FEATURE_BM_SECACK_ON            = 3;                ///< Enables the Secure-ACK mechanism
+
+// Control Features
+const uint8_t FEATURE_CTRL_INPUT_COUNT        = 50;
+const uint8_t FEATURE_CTRL_INPUT_NOTIFY       = 51;
+const uint8_t FEATURE_CTRL_SWITCH_COUNT       = 52;
+const uint8_t FEATURE_CTRL_LIGHT_COUNT        = 53;
+const uint8_t FEATURE_CTRL_SERVO_COUNT        = 54;
+const uint8_t FEATURE_CTRL_SOUND_COUNT        = 55;
+const uint8_t FEATURE_CTRL_MOTOR_COUNT        = 56;
+const uint8_t FEATURE_CTRL_ANALOGOUT_COUNT    = 57;
+const uint8_t FEATURE_CTRL_STRETCH_DIMM       = 58;
+const uint8_t FEATURE_CTRL_BACKLIGHT_COUNT    = 59;
+const uint8_t FEATURE_CTRL_MAC_LEVEL          = 60;
+const uint8_t FEATURE_CTRL_MAC_SAVE           = 61;
+const uint8_t FEATURE_CTRL_MAC_COUNT          = 62;
+const uint8_t FEATURE_CTRL_MAC_SIZE           = 63;
+const uint8_t FEATURE_CTRL_MAC_START_MAN      = 64;
+const uint8_t FEATURE_CTRL_MAC_START_DCC      = 65;
+const uint8_t FEATURE_CTRL_PORT_QUERY_AVAILABLE = 66;
 
 /// @brief Structure representing a node on the BiDiB bus.
 struct BiDiBNode
@@ -232,6 +319,27 @@ typedef void (*VendorDataCallback)(uint8_t node_addr, const char* name, const ch
 /// @param status The status of the firmware update (see BIDIB_MSG_FW_UPDATE_STAT_* constants).
 /// @param detail Additional detail for the status (e.g., error code).
 typedef void (*FirmwareUpdateStatusCallback)(uint8_t status, uint8_t detail);
+
+/// @brief Callback for LC Port Status
+typedef void (*LcStatCallback)(uint8_t portL, uint8_t portH, uint8_t portStat);
+
+/// @brief Callback for LC Port Configuration
+typedef void (*LcConfigXCallback)(uint8_t portL, uint8_t portH, uint8_t paramCount, const uint8_t* params);
+
+/// @brief Callback for LC NA (Error/Done)
+typedef void (*LcNaCallback)(uint8_t portL, uint8_t portH, uint8_t errCause);
+
+/// @brief Callback for LC Wait
+typedef void (*LcWaitCallback)(uint8_t portL, uint8_t portH, uint8_t time);
+
+/// @brief Callback for Macro State
+typedef void (*LcMacroStateCallback)(uint8_t macroIdx, uint8_t state);
+
+/// @brief Callback for Macro Content
+typedef void (*LcMacroCallback)(uint8_t macroIdx, uint8_t itemIdx, uint8_t delay, uint8_t portL, uint8_t portH, uint8_t portStat);
+
+/// @brief Callback for Macro Parameter
+typedef void (*LcMacroParaCallback)(uint8_t macroIdx, uint8_t paraIdx, uint32_t value);
 
 
 //================================================================================
@@ -486,6 +594,73 @@ public:
     /// @param data A pointer to the bitmap data representing the detector states.
     void sendOccupancyMultiple(uint8_t baseNum, uint8_t size, const uint8_t* data);
 
+    // --- Control / Switching Functions (LC) ---
+
+    /// @brief Sets the output state of a port.
+    /// @param portL Low byte of port address.
+    /// @param portH High byte of port address.
+    /// @param state The desired state (see BIDIB_PORT_* operations).
+    void setLcOutput(uint8_t portL, uint8_t portH, uint8_t state);
+
+    /// @brief Queries the status of a specific port.
+    /// @param portL Low byte of port address.
+    /// @param portH High byte of port address.
+    void queryLcPort(uint8_t portL, uint8_t portH);
+
+    /// @brief Queries the configuration of a specific port.
+    /// @param portL Low byte of port address.
+    /// @param portH High byte of port address.
+    void getLcConfigX(uint8_t portL, uint8_t portH);
+
+    /// @brief Sets the configuration for a specific port.
+    /// @param portL Low byte of port address.
+    /// @param portH High byte of port address.
+    /// @param paramCount The number of configuration parameters.
+    /// @param params Pointer to an array of parameter type/value pairs.
+    void setLcConfigX(uint8_t portL, uint8_t portH, uint8_t paramCount, const uint8_t* params);
+
+    // --- Macro Functions ---
+
+    /// @brief Controls a macro (Start, Stop, Restore, Save, Delete).
+    /// @param macroIdx The index of the macro.
+    /// @param opcode The operation code (see BIDIB_MACRO_*).
+    void handleMacro(uint8_t macroIdx, uint8_t opcode);
+
+    /// @brief Sets a macro step.
+    /// @param macroIdx The index of the macro.
+    /// @param itemIdx The index of the step.
+    /// @param delay Delay in ticks.
+    /// @param portL Low byte of port address.
+    /// @param portH High byte of port address.
+    /// @param status Status/Action for the port.
+    void setMacro(uint8_t macroIdx, uint8_t itemIdx, uint8_t delay, uint8_t portL, uint8_t portH, uint8_t status);
+
+    /// @brief Gets a macro step.
+    /// @param macroIdx The index of the macro.
+    /// @param itemIdx The index of the step.
+    void getMacro(uint8_t macroIdx, uint8_t itemIdx);
+
+    /// @brief Sets a macro parameter.
+    /// @param macroIdx The index of the macro.
+    /// @param paraIdx The parameter index.
+    /// @param value The value (uint32_t, will be split into 4 bytes).
+    void setMacroParameter(uint8_t macroIdx, uint8_t paraIdx, uint32_t value);
+
+    /// @brief Gets a macro parameter.
+    /// @param macroIdx The index of the macro.
+    /// @param paraIdx The parameter index.
+    void getMacroParameter(uint8_t macroIdx, uint8_t paraIdx);
+
+    // --- Callbacks for LC ---
+    void onLcStat(LcStatCallback callback);
+    void onLcConfigX(LcConfigXCallback callback);
+    void onLcNa(LcNaCallback callback);
+    void onLcWait(LcWaitCallback callback);
+    void onLcMacroState(LcMacroStateCallback callback);
+    void onLcMacro(LcMacroCallback callback);
+    void onLcMacroPara(LcMacroParaCallback callback);
+
+
     // --- Node Properties ---
     uint8_t unique_id[7];       ///< The unique ID of this node.
     uint8_t node_table_version; ///< The version of the node table.
@@ -518,6 +693,15 @@ protected:
     CvCallback _cvCallback;
     AccessoryStateCallback _accessoryStateCallback;
     FirmwareUpdateStatusCallback _firmwareUpdateStatusCallback;
+
+    // LC Callbacks
+    LcStatCallback _lcStatCallback;
+    LcConfigXCallback _lcConfigXCallback;
+    LcNaCallback _lcNaCallback;
+    LcWaitCallback _lcWaitCallback;
+    LcMacroStateCallback _lcMacroStateCallback;
+    LcMacroCallback _lcMacroCallback;
+    LcMacroParaCallback _lcMacroParaCallback;
 
 protected:
     // Receive buffer state
