@@ -36,6 +36,9 @@ BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false), _system_enabled(t
     _addressCallback = nullptr;
     _accessoryStateCallback = nullptr;
     _firmwareUpdateStatusCallback = nullptr;
+    _lcStatCallback = nullptr;
+    _lcConfigXCallback = nullptr;
+    _lcWaitCallback = nullptr;
 
     // Initialize the pending Secure-ACKs list.
     for (int i = 0; i < MAX_PENDING_SECURE_ACKS; ++i) {
@@ -233,6 +236,58 @@ void BiDiB::firmwareUpdateOperation(uint8_t node_addr, uint8_t op, const uint8_t
 
 void BiDiB::onFirmwareUpdateStatus(FirmwareUpdateStatusCallback callback) {
     _firmwareUpdateStatusCallback = callback;
+}
+
+// =============================================================================
+// Light Control Functions
+// =============================================================================
+
+void BiDiB::setLcOutput(uint8_t portType, uint8_t portNum, uint8_t state) {
+    BiDiBMessage msg;
+    msg.length = 6;
+    msg.address[0] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_LC_OUTPUT;
+    msg.data[0] = portType;
+    msg.data[1] = portNum;
+    msg.data[2] = state;
+    sendMessage(msg);
+}
+
+void BiDiB::setLcConfigX(uint8_t portType, uint8_t portNum, uint8_t enumVal, uint8_t value) {
+    BiDiBMessage msg;
+    msg.length = 7;
+    msg.address[0] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_LC_CONFIGX_SET;
+    msg.data[0] = portType;
+    msg.data[1] = portNum;
+    msg.data[2] = enumVal;
+    msg.data[3] = value;
+    sendMessage(msg);
+}
+
+void BiDiB::getLcConfigX(uint8_t portType, uint8_t portNum) {
+    BiDiBMessage msg;
+    msg.length = 5;
+    msg.address[0] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_LC_CONFIGX_GET;
+    msg.data[0] = portType;
+    msg.data[1] = portNum;
+    sendMessage(msg);
+}
+
+void BiDiB::onLcStat(LcStatCallback callback) {
+    _lcStatCallback = callback;
+}
+
+void BiDiB::onLcConfigX(LcConfigXCallback callback) {
+    _lcConfigXCallback = callback;
+}
+
+void BiDiB::onLcWait(LcWaitCallback callback) {
+    _lcWaitCallback = callback;
 }
 
 void BiDiB::enterFirmwareUpdateMode(uint8_t node_addr) {
@@ -774,6 +829,59 @@ void BiDiB::handleMessages() {
                 uint8_t status = msg.data[0];
                 uint8_t detail = (msg.length > (addr_len + 3)) ? msg.data[1] : 0;
                 _firmwareUpdateStatusCallback(status, detail);
+            }
+            break;
+        }
+
+        // --- Light Control Handling ---
+        case MSG_LC_STAT: {
+            if (_lcStatCallback != nullptr) {
+                uint8_t portType = msg.data[0];
+                uint8_t portNum = msg.data[1];
+                uint8_t state = msg.data[2];
+                _lcStatCallback(portType, portNum, state);
+            }
+            break;
+        }
+        case MSG_LC_WAIT: {
+            if (_lcWaitCallback != nullptr) {
+                uint8_t portType = msg.data[0];
+                uint8_t portNum = msg.data[1];
+                uint8_t time = msg.data[2];
+                _lcWaitCallback(portType, portNum, time);
+            }
+            break;
+        }
+        case MSG_LC_CONFIGX: {
+            if (_lcConfigXCallback != nullptr) {
+                uint8_t portType = msg.data[0];
+                uint8_t portNum = msg.data[1];
+
+                int addr_len = 0;
+                for (int i=0; i<4; ++i) { if (msg.address[i] == 0) { addr_len = i + 1; break; } }
+                // Payload: [PortType] [PortNum] [Enum1] [Val1] [Enum2] [Val2] ...
+                // Length covers up to Data end.
+                // data_len = msg.length - addr_len - 2 (msg_num, msg_type)
+
+                // We access msg.data[] directly.
+                // msg.data[0] is Type, msg.data[1] is Num.
+                // Remaining data starts at index 2.
+
+                // Calculate data length. The `msg` structure already has data extracted.
+                // How much data do we have? We don't have explicit data length in struct msg.
+                // But we know msg.length from packet.
+                // data_len calculated in receiveMessage:
+                // int data_len = msg.length - (addr_len + 1 + 1);
+                // But we don't have access to data_len here directly unless we recalculate.
+
+                int data_len = msg.length - addr_len - 2;
+                int idx = 2;
+                while (idx < data_len) {
+                    uint8_t p_enum = msg.data[idx++];
+                    if (idx >= data_len) break; // Should not happen if well-formed
+                    uint8_t p_val = msg.data[idx++];
+                    _lcConfigXCallback(portType, portNum, p_enum, p_val);
+                }
             }
             break;
         }

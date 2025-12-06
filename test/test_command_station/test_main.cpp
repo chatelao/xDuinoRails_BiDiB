@@ -68,7 +68,7 @@ void tearDown(void) {
 void test_send_track_off(void) {
     bidib.setTrackState(BIDIB_CS_STATE_OFF);
 
-    // FE 04 00 00 48 00 96 FE
+    // Expected: MAGIC | LEN=4 | ADDR=0 | MSG_NUM=0 | MSG_CS_SET_STATE | STATE | CRC | MAGIC
     TEST_ASSERT_EQUAL(8, mockSerial.available_outgoing());
     TEST_ASSERT_EQUAL(BIDIB_MAGIC, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(4, mockSerial.read_outgoing());
@@ -76,14 +76,17 @@ void test_send_track_off(void) {
     TEST_ASSERT_EQUAL(0, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(MSG_CS_SET_STATE, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(BIDIB_CS_STATE_OFF, mockSerial.read_outgoing());
-    TEST_ASSERT_EQUAL(161, mockSerial.read_outgoing()); // CRC
+
+    uint8_t payload[] = {4, 0, 0, MSG_CS_SET_STATE, BIDIB_CS_STATE_OFF};
+    uint8_t crc = bidib.calculateCrc(payload, sizeof(payload));
+    TEST_ASSERT_EQUAL(crc, mockSerial.read_outgoing()); // CRC
+
     TEST_ASSERT_EQUAL(BIDIB_MAGIC, mockSerial.read_outgoing());
 }
 
 void test_send_track_stop(void) {
     bidib.setTrackState(BIDIB_CS_STATE_STOP);
 
-    // FE 04 00 00 48 01 90 FE
     TEST_ASSERT_EQUAL(8, mockSerial.available_outgoing());
     TEST_ASSERT_EQUAL(BIDIB_MAGIC, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(4, mockSerial.read_outgoing());
@@ -91,14 +94,17 @@ void test_send_track_stop(void) {
     TEST_ASSERT_EQUAL(0, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(MSG_CS_SET_STATE, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(BIDIB_CS_STATE_STOP, mockSerial.read_outgoing());
-    TEST_ASSERT_EQUAL(144, mockSerial.read_outgoing()); // CRC
+
+    uint8_t payload[] = {4, 0, 0, MSG_CS_SET_STATE, BIDIB_CS_STATE_STOP};
+    uint8_t crc = bidib.calculateCrc(payload, sizeof(payload));
+    TEST_ASSERT_EQUAL(crc, mockSerial.read_outgoing()); // CRC
+
     TEST_ASSERT_EQUAL(BIDIB_MAGIC, mockSerial.read_outgoing());
 }
 
 void test_send_track_go(void) {
     bidib.setTrackState(BIDIB_CS_STATE_GO);
 
-    // FE 04 00 00 48 02 C3 FE
     TEST_ASSERT_EQUAL(8, mockSerial.available_outgoing());
     TEST_ASSERT_EQUAL(BIDIB_MAGIC, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(4, mockSerial.read_outgoing());
@@ -106,7 +112,11 @@ void test_send_track_go(void) {
     TEST_ASSERT_EQUAL(0, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(MSG_CS_SET_STATE, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(BIDIB_CS_STATE_GO, mockSerial.read_outgoing());
-    TEST_ASSERT_EQUAL(195, mockSerial.read_outgoing()); // CRC
+
+    uint8_t payload[] = {4, 0, 0, MSG_CS_SET_STATE, BIDIB_CS_STATE_GO};
+    uint8_t crc = bidib.calculateCrc(payload, sizeof(payload));
+    TEST_ASSERT_EQUAL(crc, mockSerial.read_outgoing()); // CRC
+
     TEST_ASSERT_EQUAL(BIDIB_MAGIC, mockSerial.read_outgoing());
 }
 
@@ -140,7 +150,7 @@ void test_receive_track_state_go(void) {
 void test_send_drive_command(void) {
     bidib.drive(3, 100, 0x10);
 
-    // FE 08 00 00 40 03 00 02 64 10 01 FE
+    // FE 08 00 00 MSG_CS_DRIVE 03 00 02 64 10 CRC FE
     TEST_ASSERT_EQUAL(12, mockSerial.available_outgoing());
     TEST_ASSERT_EQUAL(BIDIB_MAGIC, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(8, mockSerial.read_outgoing());
@@ -152,7 +162,7 @@ void test_send_drive_command(void) {
     TEST_ASSERT_EQUAL(2, mockSerial.read_outgoing()); // FORMAT
     TEST_ASSERT_EQUAL(100, mockSerial.read_outgoing()); // SPEED
     TEST_ASSERT_EQUAL(0x10, mockSerial.read_outgoing()); // FUNCTIONS
-    uint8_t data[] = {8, 0, 0, 0x40, 3, 0, 2, 100, 0x10};
+    uint8_t data[] = {8, 0, 0, MSG_CS_DRIVE, 3, 0, 2, 100, 0x10};
     uint8_t crc = bidib.calculateCrc(data, sizeof(data));
     TEST_ASSERT_EQUAL(crc, mockSerial.read_outgoing()); // CRC
     TEST_ASSERT_EQUAL(BIDIB_MAGIC, mockSerial.read_outgoing());
@@ -197,7 +207,7 @@ void test_receive_drive_ack_no_callback(void) {
 void test_send_accessory_command(void) {
     bidib.accessory(10, 1, 1); // Address 10, Output 1, State ON
 
-    // FE 07 00 00 42 0A 00 01 01 4B FE
+    // FE 07 00 00 MSG_CS_ACCESSORY 0A 00 01 01 CRC FE
     TEST_ASSERT_EQUAL(11, mockSerial.available_outgoing());
     TEST_ASSERT_EQUAL(BIDIB_MAGIC, mockSerial.read_outgoing());
     TEST_ASSERT_EQUAL(7, mockSerial.read_outgoing());
@@ -208,7 +218,7 @@ void test_send_accessory_command(void) {
     TEST_ASSERT_EQUAL(0, mockSerial.read_outgoing());  // ADDR_H
     TEST_ASSERT_EQUAL(1, mockSerial.read_outgoing());  // OUTPUT
     TEST_ASSERT_EQUAL(1, mockSerial.read_outgoing());  // STATE
-    uint8_t data[] = {7, 0, 0, 0x42, 10, 0, 1, 1};
+    uint8_t data[] = {7, 0, 0, MSG_CS_ACCESSORY, 10, 0, 1, 1};
     uint8_t crc = bidib.calculateCrc(data, sizeof(data));
     TEST_ASSERT_EQUAL(crc, mockSerial.read_outgoing()); // CRC
     TEST_ASSERT_EQUAL(BIDIB_MAGIC, mockSerial.read_outgoing());

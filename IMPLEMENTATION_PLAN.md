@@ -6,6 +6,17 @@ Vor jeder neuen Implementierung ist dieses Dokument zu konsultieren. Nach Abschl
 
 ---
 
+## Phase 0: Protokoll-Konformität
+
+**Ziel:** Sicherstellung der Konformität mit der BiDiB-Spezifikation (v0.7).
+
+- [x] **0.1. Konstanten-Update:**
+    - [x] Aktualisierung aller Protokoll-Konstanten in `BiDiB.h` auf Basis von `bidib_messages.h` (v0.7).
+    - [x] Sicherstellung der korrekten Ausrichtung und Formatierung gemäß `AGENTS.md`.
+    - *Status: Abgeschlossen. Alle Konstanten wurden aktualisiert und Unit-Tests angepasst.*
+
+---
+
 ## Phase 1: Protokoll-Grundlagen (Core Protocol Layer)
 
 **Ziel:** Eine solide Basis für die gesamte Kommunikation schaffen. In dieser Phase wird die grundlegende Fähigkeit implementiert, valide BiDiB-Nachrichten zu erstellen und zu parsen.
@@ -112,3 +123,71 @@ Vor jeder neuen Implementierung ist dieses Dokument zu konsultieren. Nach Abschl
     - [x] Implementierung des kompletten Firmware-Update-Prozesses (`MSG_FW_UPDATE_OP`, `MSG_FW_UPDATE_STAT`).
 - [x] **6.3. Hersteller-spezifische Konfiguration:**
     - [x] Implementierung der `MSG_VENDOR_...`-Nachrichten.
+
+---
+
+## Phase 7: Lichtsteuerung / Port-Konfiguration (Light Control)
+
+**Ziel:** Unterstützung komplexer Zubehör-Knoten (z.B. LightControl) durch spezialisierte Port-Nachrichten.
+
+- [x] **7.1. LC-Basis:**
+    - [x] Implementierung der Konstanten für `MSG_LC_*`.
+    - [x] Implementierung von `MSG_LC_OUTPUT` zum Schalten von Ports.
+    - [x] Implementierung von `MSG_LC_CONFIGX_SET` / `GET` zur Port-Konfiguration.
+    - [x] Implementierung von `MSG_LC_WAIT`.
+    - *Status: Vollständig implementiert und getestet in `test/test_light_control`.*
+
+---
+
+## Phase 8: RailcomPlus
+
+**Ziel:** Unterstützung von RailcomPlus zur automatischen Anmeldung von Decodern.
+
+- [ ] **8.1. Zentrale (CS):**
+    - [ ] Implementierung von `MSG_CS_RCPLUS` und `MSG_CS_RCPLUS_ACK`.
+    - [ ] Unterstützung der Opcodes BIND, PING, FIND, TID.
+- [ ] **8.2. Rückmeldung (BM):**
+    - [ ] Verarbeitung von `MSG_BM_RCPLUS`.
+
+---
+
+## Phase 9: Makros
+
+**Ziel:** Unterstützung von Makro-Abläufen auf dem Knoten.
+
+- [ ] **9.1. Makro-Steuerung:**
+    - [ ] Implementierung von `MSG_LC_MACRO_HANDLE`, `MSG_LC_MACRO_SET`, `MSG_LC_MACRO_GET`.
+    - [ ] Verarbeitung von `MSG_LC_MACRO_STATE`.
+- [ ] **9.2. Makro-Parameter:**
+    - [ ] Implementierung von `MSG_LC_MACRO_PARA_SET`, `MSG_LC_MACRO_PARA_GET`.
+
+---
+
+## Phase 10: Erweiterte Zentrale-Funktionen
+
+**Ziel:** Vervollständigung der DCC-Funktionalität.
+
+- [ ] **10.1. Binäre Zustände:**
+    - [ ] Implementierung von `MSG_CS_BIN_STATE`.
+- [ ] **10.2. Manuelle Steuerung & Events:**
+    - [ ] Implementierung von `MSG_CS_DRIVE_MANUAL`, `MSG_CS_DRIVE_EVENT`.
+
+---
+
+## Phase 11: Detaillierte Rückmeldung
+
+**Ziel:** Unterstützung erweiterter Melde-Funktionen.
+
+- [ ] **11.1. Position & Confidence:**
+    - [ ] Implementierung von `MSG_BM_POSITION` und `MSG_BM_CONFIDENCE`.
+- [ ] **11.2. Strommessung:**
+    - [ ] Implementierung von `MSG_BM_CURRENT`.
+
+---
+
+## Phase 12: System-Nachrichten
+
+**Ziel:** Vervollständigung der System-Verwaltung.
+
+- [ ] **12.1. System-Befehle:**
+    - [ ] Implementierung von `MSG_SYS_IDENTIFY`, `MSG_SYS_RESET`, `MSG_SYS_GET_SW_VERSION`.

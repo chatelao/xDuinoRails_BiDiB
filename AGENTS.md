@@ -4,13 +4,21 @@ This file contains instructions for AI agents working on this repository.
 
 ## Development Process
 
-Before starting any implementation work related to the BiDiB Arduino library, you **must** consult the `implementation_plan.md` document. This document outlines the agreed-upon development phases and the logical order of implementation.
+Before starting any implementation work related to the BiDiB Arduino library, you **must** consult the `IMPLEMENTATION_PLAN.md` document. This document outlines the agreed-upon development phases and the logical order of implementation.
 
-After completing a development phase or a significant feature, you **must** update the `implementation_plan.md` to reflect the current status of the project.
+After completing a development phase or a significant feature, you **must** update the `IMPLEMENTATION_PLAN.md` to reflect the current status of the project.
 
 ## Entwicklungsprozess
 
-Vor jeder Umsetzung ist das `implementation_plan.md` zu lesen. Nach der Umsetzung ist dasselbe Dokument nachzuführen.
+Vor jeder Umsetzung ist das `IMPLEMENTATION_PLAN.md` zu lesen. Nach der Umsetzung ist dasselbe Dokument nachzuführen.
+
+## Documentation Standards
+
+- **File Naming:** Markdown files (`.md`) must use UPPER_SNAKE_CASE filenames (e.g., `README.md`, `IMPLEMENTATION_PLAN.md`).
+
+## Dokumentationsstandards (DE)
+
+- **Dateibenennung:** Markdown-Dateien (`.md`) müssen UPPER_SNAKE_CASE-Dateinamen verwenden (z. B. `README.md`, `IMPLEMENTATION_PLAN.md`).
 
 ## Project Structure and CI/CD
 

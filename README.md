@@ -122,4 +122,4 @@ void loop() {
 
 ## Contributing
 
-Contributions are welcome! If you find a bug or want to add a new feature, please open an issue or submit a pull request. Before contributing, please read the `implementation_guide.md` and `AGENTS.md` files for guidelines on the development process.
+Contributions are welcome! If you find a bug or want to add a new feature, please open an issue or submit a pull request. Before contributing, please read the `IMPLEMENTATION_GUIDE.md` and `AGENTS.md` files for guidelines on the development process.
