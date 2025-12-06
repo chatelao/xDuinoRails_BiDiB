@@ -92,6 +92,20 @@ const uint8_t MSG_CS_POM              = 0x67;
 const uint8_t MSG_CS_RCPLUS           = 0x68;
 const uint8_t MSG_CS_PROG             = 0x6F;
 
+// --- RailcomPlus Opcodes (Assumed values, to be verified) ---
+const uint8_t BIDIB_CS_RCPLUS_GET_TID      = 0x00;
+const uint8_t BIDIB_CS_RCPLUS_SET_TID      = 0x01;
+const uint8_t BIDIB_CS_RCPLUS_PING         = 0x02;
+const uint8_t BIDIB_CS_RCPLUS_PING_ONCE_P0 = 0x03;
+const uint8_t BIDIB_CS_RCPLUS_PING_ONCE_P1 = 0x04;
+const uint8_t BIDIB_CS_RCPLUS_BIND         = 0x05;
+const uint8_t BIDIB_CS_RCPLUS_FIND_P0      = 0x06;
+const uint8_t BIDIB_CS_RCPLUS_FIND_P1      = 0x07;
+
+const uint8_t BIDIB_CS_RCPLUS_ACK_TID      = 0x00;
+const uint8_t BIDIB_CS_RCPLUS_ACK_PING     = 0x01;
+const uint8_t BIDIB_CS_RCPLUS_ACK_BIND     = 0x05;
+
 // --- Local Messages (Downstream 0x70 - 0x7F) ---
 const uint8_t MSG_LOGON_ACK           = 0x70;
 const uint8_t MSG_LOCAL_PING          = 0x71;
@@ -277,6 +291,8 @@ const uint8_t BIDIB_FEATURE_STRING_SIZE       = 1;     ///< Maximum size of stri
 const uint8_t BIDIB_FEATURE_MSG_RECEIVE_COUNT = 2;     ///< How many messages can be received at once
 const uint8_t FEATURE_BM_SECACK_AVAILABLE     = 2;     ///< Indicates if Secure-ACK is supported
 const uint8_t FEATURE_BM_SECACK_ON            = 3;     ///< Enables the Secure-ACK mechanism
+const uint8_t FEATURE_GEN_EXT_AVAILABLE       = 111;   ///< Additional protocol features
+const uint8_t FEATURE_GEN_RCPLUS_AVAILABLE    = 1;     ///< Bit 0: RailcomPlus supported
 
 /// @brief Structure representing a node on the BiDiB bus.
 struct BiDiBNode
@@ -381,6 +397,12 @@ typedef void (*LcConfigXCallback)(uint8_t portType, uint8_t portNum, uint8_t p_e
 /// @param portNum The number of the port.
 /// @param time The wait time.
 typedef void (*LcWaitCallback)(uint8_t portType, uint8_t portNum, uint8_t time);
+
+/// @brief Callback function type for RailcomPlus commands.
+/// @param opcode The RailcomPlus opcode.
+/// @param data Pointer to the data payload.
+/// @param len Length of the data payload.
+typedef void (*RcPlusCallback)(uint8_t opcode, const uint8_t* data, uint8_t len);
 
 
 //================================================================================
@@ -631,6 +653,23 @@ public:
     /// @brief Registers a callback function for LC wait notifications.
     void onLcWait(LcWaitCallback callback);
 
+    // --- RailcomPlus Functions ---
+
+    /// @brief Registers a callback function for RailcomPlus commands (MSG_CS_RCPLUS).
+    /// @param callback The function to be called.
+    void onRcPlus(RcPlusCallback callback);
+
+    /// @brief Sends a RailcomPlus acknowledgement (MSG_CS_RCPLUS_ACK).
+    /// @param opcode The RailcomPlus opcode being acknowledged.
+    /// @param data Pointer to the data payload.
+    /// @param len Length of the data payload.
+    void sendRcPlusAck(uint8_t opcode, const uint8_t* data, size_t len);
+
+    /// @brief Sends a RailcomPlus feedback message (MSG_BM_RCPLUS).
+    /// @param data Pointer to the data payload.
+    /// @param len Length of the data payload.
+    void sendBmRcPlus(const uint8_t* data, size_t len);
+
     // --- Occupancy Reporting ---
 
     /// @brief Registers a callback function to be called for single occupancy detector events (occupied/free).
@@ -699,6 +738,7 @@ protected:
     LcStatCallback _lcStatCallback;
     LcConfigXCallback _lcConfigXCallback;
     LcWaitCallback _lcWaitCallback;
+    RcPlusCallback _rcPlusCallback;
 
 protected:
     // Receive buffer state
