@@ -82,6 +82,39 @@ const uint8_t MSG_LC_MACRO_GET        = 0x4A;
 const uint8_t MSG_LC_MACRO_PARA_SET   = 0x4B;
 const uint8_t MSG_LC_MACRO_PARA_GET   = 0x4C;
 
+// --- Macro Operations ---
+const uint8_t BIDIB_MACRO_OFF         = 0x00;
+const uint8_t BIDIB_MACRO_START       = 0x01;
+const uint8_t BIDIB_MACRO_RUNNING     = 0x02; // State only
+const uint8_t BIDIB_MACRO_RESTORE     = 0xFC;
+const uint8_t BIDIB_MACRO_SAVE        = 0xFD;
+const uint8_t BIDIB_MACRO_DELETE      = 0xFE;
+const uint8_t BIDIB_MACRO_NOTEXIST    = 0xFF; // State only
+
+// --- Macro Parameters ---
+const uint8_t BIDIB_MACRO_PARA_SLOWDOWN  = 1;
+const uint8_t BIDIB_MACRO_PARA_REPEAT    = 2;
+const uint8_t BIDIB_MACRO_PARA_START_CLK = 3;
+
+// --- System Functions (Delay = 255) ---
+const uint8_t BIDIB_MSYS_END_OF_MACRO    = 255;
+const uint8_t BIDIB_MSYS_START_MACRO     = 254;
+const uint8_t BIDIB_MSYS_STOP_MACRO      = 253;
+const uint8_t BIDIB_MSYS_BEGIN_CRITCAL   = 252;
+const uint8_t BIDIB_MSYS_END_CRITCAL     = 251;
+const uint8_t BIDIB_MSYS_FLAG_QUERY1     = 250;
+const uint8_t BIDIB_MSYS_FLAG_SET        = 249;
+const uint8_t BIDIB_MSYS_FLAG_CLEAR      = 248;
+const uint8_t BIDIB_MSYS_INPUT_QUERY1    = 247;
+const uint8_t BIDIB_MSYS_INPUT_QUERY0    = 246;
+const uint8_t BIDIB_MSYS_DELAY_RANDOM    = 245;
+const uint8_t BIDIB_MSYS_DELAY_FIXED     = 244;
+const uint8_t BIDIB_MSYS_ACC_OKAY_QIN1   = 243;
+const uint8_t BIDIB_MSYS_ACC_OKAY_QIN0   = 242;
+const uint8_t BIDIB_MSYS_ACC_OKAY_NF     = 241;
+const uint8_t BIDIB_MSYS_SERVOMOVE_QUERY = 240;
+const uint8_t BIDIB_MSYS_FLAG_QUERY0     = 239;
+
 // --- DCC Gen Messages (Downstream 0x60 - 0x6F) ---
 const uint8_t MSG_CS_ALLOCATE         = 0x60;
 const uint8_t MSG_CS_SET_STATE        = 0x62;
@@ -404,6 +437,26 @@ typedef void (*LcWaitCallback)(uint8_t portType, uint8_t portNum, uint8_t time);
 /// @param len Length of the data payload.
 typedef void (*RcPlusCallback)(uint8_t opcode, const uint8_t* data, uint8_t len);
 
+/// @brief Callback function type for Macro state reports.
+/// @param macroNum The macro number.
+/// @param state The state of the macro (BIDIB_MACRO_*).
+typedef void (*LcMacroStateCallback)(uint8_t macroNum, uint8_t state);
+
+/// @brief Callback function type for Macro step reports (MSG_LC_MACRO).
+/// @param macroNum The macro number.
+/// @param stepNum The step number.
+/// @param delay The delay value.
+/// @param val1 First data byte (PORT low / SYS_CMD).
+/// @param val2 Second data byte (PORT high / SYS_ARG0).
+/// @param val3 Third data byte (PORTSTAT / SYS_ARG1).
+typedef void (*LcMacroCallback)(uint8_t macroNum, uint8_t stepNum, uint8_t delay, uint8_t val1, uint8_t val2, uint8_t val3);
+
+/// @brief Callback function type for Macro parameter reports (MSG_LC_MACRO_PARA).
+/// @param macroNum The macro number.
+/// @param paramNum The parameter number.
+/// @param value The parameter value.
+typedef void (*LcMacroParaCallback)(uint8_t macroNum, uint8_t paramNum, uint32_t value);
+
 
 //================================================================================
 // Secure ACK Configuration
@@ -670,6 +723,47 @@ public:
     /// @param len Length of the data payload.
     void sendBmRcPlus(const uint8_t* data, size_t len);
 
+    // --- Macro Functions ---
+
+    /// @brief Controls a macro (start, stop, save, etc.).
+    /// @param macroNum The macro number.
+    /// @param opCode The operation to perform (BIDIB_MACRO_*).
+    void handleMacro(uint8_t macroNum, uint8_t opCode);
+
+    /// @brief Sets a single step in a macro.
+    /// @param macroNum The macro number.
+    /// @param stepNum The step number.
+    /// @param delay The delay (0-250) or BIDIB_MSYS_* marker (255).
+    /// @param val1 Port address low byte or System Command code.
+    /// @param val2 Port address high byte or System Argument 1.
+    /// @param val3 Port state or System Argument 2.
+    void setMacroStep(uint8_t macroNum, uint8_t stepNum, uint8_t delay, uint8_t val1, uint8_t val2, uint8_t val3);
+
+    /// @brief Requests a single step from a macro.
+    /// @param macroNum The macro number.
+    /// @param stepNum The step number.
+    void getMacroStep(uint8_t macroNum, uint8_t stepNum);
+
+    /// @brief Sets a parameter for a macro.
+    /// @param macroNum The macro number.
+    /// @param paramNum The parameter number (BIDIB_MACRO_PARA_*).
+    /// @param value The 32-bit value of the parameter.
+    void setMacroParameter(uint8_t macroNum, uint8_t paramNum, uint32_t value);
+
+    /// @brief Requests a parameter of a macro.
+    /// @param macroNum The macro number.
+    /// @param paramNum The parameter number.
+    void getMacroParameter(uint8_t macroNum, uint8_t paramNum);
+
+    /// @brief Registers a callback for macro state reports.
+    void onLcMacroState(LcMacroStateCallback callback);
+
+    /// @brief Registers a callback for macro step reports.
+    void onLcMacro(LcMacroCallback callback);
+
+    /// @brief Registers a callback for macro parameter reports.
+    void onLcMacroPara(LcMacroParaCallback callback);
+
     // --- Occupancy Reporting ---
 
     /// @brief Registers a callback function to be called for single occupancy detector events (occupied/free).
@@ -739,6 +833,9 @@ protected:
     LcConfigXCallback _lcConfigXCallback;
     LcWaitCallback _lcWaitCallback;
     RcPlusCallback _rcPlusCallback;
+    LcMacroStateCallback _lcMacroStateCallback;
+    LcMacroCallback _lcMacroCallback;
+    LcMacroParaCallback _lcMacroParaCallback;
 
 protected:
     // Receive buffer state

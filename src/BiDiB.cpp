@@ -40,6 +40,9 @@ BiDiB::BiDiB() : _messageAvailable(false), _isLoggedIn(false), _system_enabled(t
     _lcConfigXCallback = nullptr;
     _lcWaitCallback = nullptr;
     _rcPlusCallback = nullptr;
+    _lcMacroStateCallback = nullptr;
+    _lcMacroCallback = nullptr;
+    _lcMacroParaCallback = nullptr;
 
     // Initialize the pending Secure-ACKs list.
     for (int i = 0; i < MAX_PENDING_SECURE_ACKS; ++i) {
@@ -937,6 +940,39 @@ void BiDiB::handleMessages() {
             break;
         }
 
+        // --- Macro Handling ---
+        case MSG_LC_MACRO_STATE: {
+            if (_lcMacroStateCallback != nullptr) {
+                uint8_t macroNum = msg.data[0];
+                uint8_t state = msg.data[1];
+                _lcMacroStateCallback(macroNum, state);
+            }
+            break;
+        }
+        case MSG_LC_MACRO: {
+            if (_lcMacroCallback != nullptr) {
+                // MSG_LC_MACRO: [MacroNum] [StepNum] [Delay] [Val1] [Val2] [Val3]
+                uint8_t macroNum = msg.data[0];
+                uint8_t stepNum = msg.data[1];
+                uint8_t delay = msg.data[2];
+                uint8_t val1 = msg.data[3];
+                uint8_t val2 = msg.data[4];
+                uint8_t val3 = msg.data[5];
+                _lcMacroCallback(macroNum, stepNum, delay, val1, val2, val3);
+            }
+            break;
+        }
+        case MSG_LC_MACRO_PARA: {
+            if (_lcMacroParaCallback != nullptr) {
+                // MSG_LC_MACRO_PARA: [MacroNum] [ParamNum] [Val0] [Val1] [Val2] [Val3]
+                uint8_t macroNum = msg.data[0];
+                uint8_t paramNum = msg.data[1];
+                uint32_t value = (uint32_t)msg.data[2] | ((uint32_t)msg.data[3] << 8) | ((uint32_t)msg.data[4] << 16) | ((uint32_t)msg.data[5] << 24);
+                _lcMacroParaCallback(macroNum, paramNum, value);
+            }
+            break;
+        }
+
         // --- Secure-ACK Handling ---
         case MSG_BM_MIRROR_OCC:
         case MSG_BM_MIRROR_FREE: {
@@ -1130,6 +1166,85 @@ bool BiDiB::receiveMessage(BiDiBMessage& msg) {
         }
     }
     return false;
+}
+
+// =============================================================================
+// Macro Functions
+// =============================================================================
+
+void BiDiB::handleMacro(uint8_t macroNum, uint8_t opCode) {
+    BiDiBMessage msg;
+    msg.length = 5;
+    msg.address[0] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_LC_MACRO_HANDLE;
+    msg.data[0] = macroNum;
+    msg.data[1] = opCode;
+    sendMessage(msg);
+}
+
+void BiDiB::setMacroStep(uint8_t macroNum, uint8_t stepNum, uint8_t delay, uint8_t val1, uint8_t val2, uint8_t val3) {
+    BiDiBMessage msg;
+    msg.length = 9;
+    msg.address[0] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_LC_MACRO_SET;
+    msg.data[0] = macroNum;
+    msg.data[1] = stepNum;
+    msg.data[2] = delay;
+    msg.data[3] = val1;
+    msg.data[4] = val2;
+    msg.data[5] = val3;
+    sendMessage(msg);
+}
+
+void BiDiB::getMacroStep(uint8_t macroNum, uint8_t stepNum) {
+    BiDiBMessage msg;
+    msg.length = 5;
+    msg.address[0] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_LC_MACRO_GET;
+    msg.data[0] = macroNum;
+    msg.data[1] = stepNum;
+    sendMessage(msg);
+}
+
+void BiDiB::setMacroParameter(uint8_t macroNum, uint8_t paramNum, uint32_t value) {
+    BiDiBMessage msg;
+    msg.length = 9;
+    msg.address[0] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_LC_MACRO_PARA_SET;
+    msg.data[0] = macroNum;
+    msg.data[1] = paramNum;
+    msg.data[2] = value & 0xFF;
+    msg.data[3] = (value >> 8) & 0xFF;
+    msg.data[4] = (value >> 16) & 0xFF;
+    msg.data[5] = (value >> 24) & 0xFF;
+    sendMessage(msg);
+}
+
+void BiDiB::getMacroParameter(uint8_t macroNum, uint8_t paramNum) {
+    BiDiBMessage msg;
+    msg.length = 5;
+    msg.address[0] = 0;
+    msg.msg_num = 0;
+    msg.msg_type = MSG_LC_MACRO_PARA_GET;
+    msg.data[0] = macroNum;
+    msg.data[1] = paramNum;
+    sendMessage(msg);
+}
+
+void BiDiB::onLcMacroState(LcMacroStateCallback callback) {
+    _lcMacroStateCallback = callback;
+}
+
+void BiDiB::onLcMacro(LcMacroCallback callback) {
+    _lcMacroCallback = callback;
+}
+
+void BiDiB::onLcMacroPara(LcMacroParaCallback callback) {
+    _lcMacroParaCallback = callback;
 }
 
 // =============================================================================
