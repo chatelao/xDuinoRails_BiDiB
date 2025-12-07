@@ -155,11 +155,12 @@ Vor jeder neuen Implementierung ist dieses Dokument zu konsultieren. Nach Abschl
 
 **Ziel:** Unterstützung von Makro-Abläufen auf dem Knoten.
 
-- [ ] **9.1. Makro-Steuerung:**
-    - [ ] Implementierung von `MSG_LC_MACRO_HANDLE`, `MSG_LC_MACRO_SET`, `MSG_LC_MACRO_GET`.
-    - [ ] Verarbeitung von `MSG_LC_MACRO_STATE`.
-- [ ] **9.2. Makro-Parameter:**
-    - [ ] Implementierung von `MSG_LC_MACRO_PARA_SET`, `MSG_LC_MACRO_PARA_GET`.
+- [x] **9.1. Makro-Steuerung:**
+    - [x] Implementierung von `MSG_LC_MACRO_HANDLE`, `MSG_LC_MACRO_SET`, `MSG_LC_MACRO_GET`.
+    - [x] Verarbeitung von `MSG_LC_MACRO_STATE`.
+- [x] **9.2. Makro-Parameter:**
+    - [x] Implementierung von `MSG_LC_MACRO_PARA_SET`, `MSG_LC_MACRO_PARA_GET`.
+    - *Status: Vollständig implementiert und getestet in `test/test_macros`.*
 
 ---
 
