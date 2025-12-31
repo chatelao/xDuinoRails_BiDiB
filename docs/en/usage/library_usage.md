@@ -78,8 +78,8 @@ void loop() {
     // Turn on the track power
     bidib.setTrackState(BIDIB_CS_STATE_GO);
 
-    // Drive locomotive with address 3 at half speed
-    bidib.drive(3, 64, 0); // Address, speed (0-127), functions
+    // Drive locomotive with address 3 at half speed forward
+    bidib.drive(3, 64, 0); // Address, speed (-127 to 127), functions
 
     // Wait for 5 seconds
     delay(5000);
@@ -124,9 +124,9 @@ void loop() {
 }
 ```
 
-## Receiving Occupancy Feedback
+## Receiving and Sending Occupancy Feedback
 
-The library can receive feedback from occupancy detectors and other sensors on the bus using callback functions.
+The library can receive feedback from occupancy detectors and other sensors on the bus using callback functions. It can also act as a detector itself and send occupancy reports to the master.
 
 ```cpp
 // Callback for single occupancy events
@@ -134,6 +134,13 @@ void handleOccupancy(uint8_t detectorNum, bool occupied) {
   Serial.print("Detector ");
   Serial.print(detectorNum);
   Serial.println(occupied ? " is occupied." : " is free.");
+}
+
+// Callback for a range of occupancy events
+void handleOccupancyMultiple(uint8_t baseNum, uint8_t size, const uint8_t* data) {
+    Serial.print("Multiple occupancy report from base ");
+    Serial.println(baseNum);
+    // Process the bitmap 'data' for 'size' detectors
 }
 
 // Callback for locomotive address reports (e.g., from a Railcom detector)
@@ -149,6 +156,7 @@ void setup() {
 
   // Register the callback functions
   bidib.onOccupancy(handleOccupancy);
+  bidib.onOccupancyMultiple(handleOccupancyMultiple);
   bidib.onAddress(handleAddress);
   bidib.onSpeedUpdate(handleSpeed);
   bidib.onCvUpdate(handleCv);
@@ -178,6 +186,14 @@ void loop() {
   if (bidib.messageAvailable()) {
     bidib.handleMessages();
   }
+
+  // Example of acting as a detector and sending feedback
+  // This would typically be triggered by a hardware sensor
+  static bool myDetectorState = false;
+  // if (/* some hardware condition to report change */) {
+  //     myDetectorState = !myDetectorState;
+  //     bidib.sendOccupancySingle(10, myDetectorState); // Report state for detector number 10
+  // }
 }
 ```
 
@@ -212,36 +228,117 @@ void loop() {
 }
 ```
 
-## Key Functions
+## Light Control
 
--   `begin(Stream &serial)`: Initializes the library with a serial interface.
--   `update()`: Reads and processes incoming data from the serial port. Call this in your main `loop()`.
--   `handleMessages()`: Interprets a complete, received message.
--   `isLoggedIn()`: Returns `true` if the node has successfully logged on to the BiDiB bus.
--   `setTrackState(uint8_t state)`: Sets the track power state (`BIDIB_CS_STATE_OFF`, `BIDIB_CS_STATE_STOP`, `BIDIB_CS_STATE_GO`).
--   `drive(uint16_t address, int8_t speed, uint8_t functions)`: Sends a drive command to a locomotive.
--   `accessory(uint16_t address, uint8_t output, uint8_t state)`: Sends a command to a DCC accessory.
--   `pomWriteByte(uint16_t address, uint16_t cv, uint8_t value)`: Writes a CV value on the main track (PoM).
--   `setBoosterState(bool on, uint8_t node_addr)`: Turns a booster on or off.
--   `queryBooster(uint8_t node_addr)`: Requests the status of a booster.
--   `setAccessory(uint8_t accessoryNum, uint8_t aspect)`: Sets the state of a native BiDiB accessory.
--   `getAccessory(uint8_t accessoryNum)`: Requests the state of a native BiDiB accessory.
+The library provides functions to control Light Control (LC) ports, which can be used for signals, building lights, and other effects.
 
-### Callback Registration Functions
+```cpp
+// Callback for LC port status reports
+void handleLcStat(uint8_t portType, uint8_t portNum, uint8_t state) {
+  Serial.print("LC Port Type ");
+  Serial.print(portType);
+  Serial.print(", Number ");
+  Serial.print(portNum);
+  Serial.print(" is now state ");
+  Serial.println(state);
+}
 
--   `onDriveAck(callback)`: Registers a function to handle drive command acknowledgements.
--   `onAccessoryAck(callback)`: Registers a function to handle DCC accessory acknowledgements.
--   `onPomAck(callback)`: Registers a function to handle PoM write acknowledgements.
--   `onOccupancy(callback)`: Registers a function to handle occupancy reports (`occupied`/`free`).
--   `onAddress(callback)`: Registers a function to handle address reports from detectors.
--   `onAccessoryState(callback)`: Registers a function to handle state reports from native BiDiB accessories.
--   `onBoosterStatus(callback)`: Registers a function to handle booster status reports.
--   `onBoosterDiagnostic(callback)`: Registers a function to handle booster diagnostic reports.
--   `onSpeedUpdate(callback)`: Registers a function to handle speed reports from detectors.
--   `onCvUpdate(callback)`: Registers a function to handle CV reports from detectors.
--   `onFirmwareUpdateStatus(callback)`: Registers a function to handle firmware update status reports.
--   `onVendorAck(callback)`: Registers a function to handle vendor acknowledgements.
--   `onVendorData(callback)`: Registers a function to handle vendor data reports.
+void setup() {
+  // ... (setup code as above) ...
+  bidib.onLcStat(handleLcStat);
+}
+
+void loop() {
+  // ... (update loop as above) ...
+
+  if (bidib.isLoggedIn()) {
+    // Turn on a light port
+    bidib.setLcOutput(BIDIB_PORTTYPE_LIGHT, 1, 255); // Type, Port Number, State (e.g., brightness)
+    delay(2000);
+
+    // Turn it off
+    bidib.setLcOutput(BIDIB_PORTTYPE_LIGHT, 1, 0);
+    delay(2000);
+
+    // Configure a servo port
+    // Set the servo speed
+    bidib.setLcConfigX(BIDIB_PORTTYPE_SERVO, 0, BIDIB_PCFG_SERVO_SPEED, 10);
+  }
+}
+```
+
+## Using Macros
+
+BiDiB supports complex command sequences called macros, which can be stored and executed on accessory nodes.
+
+```cpp
+// Callback for macro state reports
+void handleMacroState(uint8_t macroNum, uint8_t state) {
+  Serial.print("Macro ");
+  Serial.print(macroNum);
+  Serial.print(" state is: ");
+  Serial.println(state);
+}
+
+void setup() {
+  // ... (setup code as above) ...
+  bidib.onLcMacroState(handleMacroState);
+}
+
+void controlMacro(uint8_t targetNode) {
+  if (bidib.isLoggedIn()) {
+    // Define a simple macro on the target node
+    // Step 0: Turn on light port 5
+    bidib.setMacroStep(0, 0, 0, 5, 0, 255); // Macro 0, Step 0, Delay 0, Port 5, State 255
+    delay(50);
+    // Step 1: Wait for 2 seconds (20 * 100ms) - BIDIB_MSYS_DELAY_FIXED is 244
+    bidib.setMacroStep(0, 1, 244, 20, 0, 0);
+    delay(50);
+    // Step 2: Turn off light port 5
+    bidib.setMacroStep(0, 2, 0, 5, 0, 0);
+    delay(50);
+    // Step 3: End of macro - BIDIB_MSYS_END_OF_MACRO is 255
+    bidib.setMacroStep(0, 3, 255, 0, 0, 0);
+    delay(50);
+
+    // Save the macro
+    bidib.handleMacro(targetNode, BIDIB_MACRO_SAVE);
+    delay(100);
+
+    // Start the macro
+    bidib.handleMacro(targetNode, BIDIB_MACRO_START);
+  }
+}
+```
+
+## RailcomPlus®
+
+The library can handle RailcomPlus commands for advanced decoder feedback and configuration.
+
+```cpp
+// Callback for incoming RailcomPlus commands from the master
+void handleRcPlus(uint8_t opcode, const uint8_t* data, uint8_t len) {
+  Serial.print("Received RailcomPlus command with opcode: ");
+  Serial.println(opcode);
+  // Here, you would process the command based on the opcode and data.
+  // For example, you might respond with a MSG_CS_RCPLUS_ACK.
+  uint8_t response_data[] = { 0x01, 0x02 };
+  bidib.sendRcPlusAck(BIDIB_CS_RCPLUS_ACK_TID, response_data, sizeof(response_data));
+}
+
+void setup() {
+  // ... (setup code as above) ...
+  bidib.onRcPlus(handleRcPlus);
+}
+
+void loop() {
+  // The update loop will automatically trigger the callback when messages are received
+  bidib.update();
+  if (bidib.messageAvailable()) {
+    bidib.handleMessages();
+  }
+}
+```
 
 ## Performing a Firmware Update
 
@@ -315,3 +412,59 @@ void queryVendorSetting(uint8_t targetNode) {
   bidib.vendorDisable(targetNode);
 }
 ```
+
+## Key Functions
+
+-   `begin(Stream &serial)`: Initializes the library with a serial interface.
+-   `update()`: Reads and processes incoming data from the serial port. Call this in your main `loop()`.
+-   `handleMessages()`: Interprets a complete, received message.
+-   `isLoggedIn()`: Returns `true` if the node has successfully logged on to the BiDiB bus.
+-   `setTrackState(uint8_t state)`: Sets the track power state (`BIDIB_CS_STATE_OFF`, `BIDIB_CS_STATE_STOP`, `BIDIB_CS_STATE_GO`).
+-   `drive(uint16_t address, int8_t speed, uint8_t functions)`: Sends a drive command to a locomotive.
+-   `accessory(uint16_t address, uint8_t output, uint8_t state)`: Sends a command to a DCC accessory.
+-   `pomWriteByte(uint16_t address, uint16_t cv, uint8_t value)`: Writes a CV value on the main track (PoM).
+-   `setBoosterState(bool on, uint8_t node_addr)`: Turns a booster on or off.
+-   `queryBooster(uint8_t node_addr)`: Requests the status of a booster.
+-   `setAccessory(uint8_t accessoryNum, uint8_t aspect)`: Sets the state of a native BiDiB accessory.
+-   `getAccessory(uint8_t accessoryNum)`: Requests the state of a native BiDiB accessory.
+-   `sendOccupancySingle(uint8_t detectorNum, bool occupied)`: Sends an occupancy report for a single detector.
+-   `sendOccupancyMultiple(uint8_t baseNum, uint8_t size, const uint8_t* data)`: Sends an occupancy report for a range of detectors.
+-   `setLcOutput(uint8_t portType, uint8_t portNum, uint8_t state)`: Sets the state of a Light Control port.
+-   `setLcConfigX(uint8_t portType, uint8_t portNum, uint8_t enumVal, uint8_t value)`: Sets a configuration parameter for an LC port.
+-   `getLcConfigX(uint8_t portType, uint8_t portNum)`: Requests the configuration of an LC port.
+-   `handleMacro(uint8_t macroNum, uint8_t opCode)`: Controls a macro (start, stop, save, etc.).
+-   `setMacroStep(...)`: Sets a single step in a macro.
+-   `getMacroStep(uint8_t macroNum, uint8_t stepNum)`: Requests a single step from a macro.
+-   `setMacroParameter(...)`: Sets a parameter for a macro.
+-   `getMacroParameter(uint8_t macroNum, uint8_t paramNum)`: Requests a parameter of a macro.
+-   `vendorEnable(uint8_t node_addr)`: Enables vendor-specific mode on a node.
+-   `vendorDisable(uint8_t node_addr)`: Disables vendor-specific mode on a node.
+-   `vendorGet(uint8_t node_addr, const char* name)`: Reads a vendor-specific parameter.
+-   `vendorSet(uint8_t node_addr, const char* name, const char* value)`: Sets a vendor-specific parameter.
+-   `enterFirmwareUpdateMode(uint8_t node_addr)`: Instructs a node to enter firmware update mode.
+-   `exitFirmwareUpdateMode(uint8_t node_addr)`: Instructs a node to exit firmware update mode.
+-   `sendFirmwareUpdateData(...)`: Sends a line of firmware data to the node.
+
+### Callback Registration Functions
+
+-   `onDriveAck(callback)`: Registers a function to handle drive command acknowledgements.
+-   `onAccessoryAck(callback)`: Registers a function to handle DCC accessory acknowledgements.
+-   `onPomAck(callback)`: Registers a function to handle PoM write acknowledgements.
+-   `onOccupancy(callback)`: Registers a function to handle occupancy reports (`occupied`/`free`).
+-   `onOccupancyMultiple(callback)`: Registers a function for multiple occupancy detector reports.
+-   `onAddress(callback)`: Registers a function to handle address reports from detectors.
+-   `onAccessoryState(callback)`: Registers a function to handle state reports from native BiDiB accessories.
+-   `onBoosterStatus(callback)`: Registers a function to handle booster status reports.
+-   `onBoosterDiagnostic(callback)`: Registers a function to handle booster diagnostic reports.
+-   `onSpeedUpdate(callback)`: Registers a function to handle speed reports from detectors.
+-   `onCvUpdate(callback)`: Registers a function to handle CV reports from detectors.
+-   `onFirmwareUpdateStatus(callback)`: Registers a function to handle firmware update status reports.
+-   `onVendorAck(callback)`: Registers a function to handle vendor acknowledgements.
+-   `onVendorData(callback)`: Registers a function to handle vendor data reports.
+-   `onLcStat(callback)`: Registers a function for LC port status reports.
+-   `onLcConfigX(callback)`: Registers a function for LC configuration reports.
+-   `onLcWait(callback)`: Registers a function for LC wait notifications.
+-   `onLcMacroState(callback)`: Registers a callback for macro state reports.
+-   `onLcMacro(callback)`: Registers a callback for macro step reports.
+-   `onLcMacroPara(callback)`: Registers a callback for macro parameter reports.
+-   `onRcPlus(callback)`: Registers a callback for RailcomPlus commands.
